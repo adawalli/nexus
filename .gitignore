@@ -30,6 +30,7 @@ out/
 # IDE and editor files
 .vscode/
 .idea/
+.cursor/mcp.json
 *.swp
 *.swo
 *~
@@ -80,6 +81,9 @@ temp/
 
 # Optional stylelint cache
 .stylelintcache
+
+# Secrets detection
+.gitleaks-baseline.json
 
 # Microbundle cache
 .rpt2_cache/

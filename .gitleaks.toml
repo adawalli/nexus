@@ -1,0 +1,94 @@
+# Gitleaks configuration for OpenRouter Search MCP Server
+# https://github.com/gitleaks/gitleaks
+
+title = "OpenRouter Search MCP Server - Secrets Detection"
+
+# Use the default gitleaks configuration as a base
+[extend]
+useDefault = true
+
+# Custom rules for project-specific secrets
+[[rules]]
+description = "OpenRouter API Key"
+id = "openrouter-api-key"
+regex = '''(?i)(openrouter[_-]?api[_-]?key|openrouter[_-]?token)['":\s=]*([sk]-[a-z0-9]{32,})'''
+secretGroup = 2
+keywords = ["openrouter", "sk-"]
+
+[[rules]]
+description = "Anthropic API Key"
+id = "anthropic-api-key"
+regex = '''(?i)(anthropic[_-]?api[_-]?key|anthropic[_-]?token|claude[_-]?api[_-]?key)['":\s=]*([a-zA-Z0-9]{32,})'''
+secretGroup = 2
+keywords = ["anthropic", "claude"]
+
+[[rules]]
+description = "OpenAI API Key"
+id = "openai-api-key"
+regex = '''(?i)(openai[_-]?api[_-]?key|openai[_-]?token)['":\s=]*([a-zA-Z0-9]{32,})'''
+secretGroup = 2
+keywords = ["openai"]
+
+[[rules]]
+description = "MCP Configuration Keys"
+id = "mcp-config-key"
+regex = '''(?i)(mcp[_-]?key|mcp[_-]?token|mcp[_-]?secret)['":\s=]*([a-zA-Z0-9]{16,})'''
+secretGroup = 2
+keywords = ["mcp"]
+
+# Additional common secrets
+[[rules]]
+description = "Generic API Key"
+id = "generic-api-key"
+regex = '''(?i)(api[_-]?key|api[_-]?token|access[_-]?token|secret[_-]?key)['":\s=]*([a-zA-Z0-9]{20,})'''
+secretGroup = 2
+keywords = ["api_key", "api-key", "api_token", "access_token", "secret_key"]
+
+# Allowlist for false positives
+[allowlist]
+description = "Allowlisted files and patterns"
+files = [
+    '''tests/.*\.test\.ts$''',
+    '''tests/.*\.spec\.ts$''',
+    '''tests/fixtures/.*''',
+    '''tests/utils/mocks/.*''',
+    '''CLAUDE\.md$''',
+    '''README\.md$''',
+    '''\.gitleaks\.toml$''',
+    '''test-secret\.ts$'''
+]
+
+# Allowlist specific patterns that are not secrets (test data)
+paths = [
+    '''msk-or-test-.*''',
+    '''msk-or-valid-key-.*''',
+    '''msk-1234567890.*''',
+    '''msk-0987654321.*''',
+    '''example[_-]?key''',
+    '''dummy[_-]?key''',
+    '''test[_-]?key''',
+    '''mock[_-]?key''',
+    '''fake[_-]?key''',
+    '''placeholder''',
+    '''your[_-]?key[_-]?here''',
+    '''sk-1234567890abcdef''',
+    '''example\.com''',
+    '''localhost''',
+]
+
+# Entropy settings
+[allowlist.entropy]
+# Minimum entropy for a string to be considered a secret
+min = 3.0
+# Maximum entropy for a string to be considered a secret
+max = 8.0
+# Allowlist high entropy strings that are not secrets
+groups = [
+    "sha256",
+    "sha1",
+    "md5",
+    "base64",
+    "hex",
+    "uuid",
+    "timestamp"
+]

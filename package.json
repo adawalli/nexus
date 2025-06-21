@@ -38,7 +38,7 @@
     "release:patch": "standard-version --release-as patch && npm-run-all release:build release:publish",
     "release:minor": "standard-version --release-as minor && npm-run-all release:build release:publish",
     "release:major": "standard-version --release-as major && npm-run-all release:build release:publish",
-    "release:validate": "npm-run-all lint format:check type-check test",
+    "release:validate": "npm-run-all lint format:check type-check secrets:scan test",
     "release:build": "npm run build",
     "release:publish": "npm publish",
     "release:dry-run": "npm publish --dry-run",
@@ -50,6 +50,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "tsc --project tsconfig.dev.json --noEmit",
+    "secrets:scan": "gitleaks detect --source . --verbose",
+    "secrets:scan-staged": "gitleaks protect --source . --verbose",
+    "secrets:baseline": "gitleaks detect --source . --report-path .gitleaks-baseline.json",
     "verify": "node scripts/build-verification.js",
     "scripts:list": "echo 'Available script categories:' && echo '' && echo '📦 BUILD SCRIPTS:' && echo '  build        - Complete production build pipeline' && echo '  build:clean  - Remove dist directory and artifacts' && echo '  build:compile - TypeScript compilation (no bundling)' && echo '  build:validate - Verify build output integrity' && echo '  build:cli-setup - Configure CLI executable' && echo '' && echo '🔧 DEVELOPMENT SCRIPTS:' && echo '  dev          - Parallel development with watch & types' && echo '  dev:start    - Development server with hot reload' && echo '  dev:watch    - Watch mode development server' && echo '  dev:types    - TypeScript watch mode type checking' && echo '  dev:clean    - Clean development artifacts' && echo '' && echo '🧪 TESTING SCRIPTS:' && echo '  test         - Complete test suite (unit + integration)' && echo '  test:unit    - Unit tests only' && echo '  test:integration - Integration tests only' && echo '  test:watch   - Interactive test watch mode' && echo '  test:ui      - Vitest UI for test management' && echo '  test:coverage - Tests with coverage reporting' && echo '  test:npx:local - Test local NPX installation' && echo '  test:npx:published - Test published NPX functionality' && echo '' && echo '🚀 RELEASE SCRIPTS:' && echo '  release      - Complete release workflow' && echo '  release:patch - Automated patch release' && echo '  release:minor - Automated minor release' && echo '  release:major - Automated major release' && echo '  release:validate - Pre-release validation' && echo '  release:dry-run - Test publish without publishing' && echo '' && echo '✨ QUALITY SCRIPTS:' && echo '  lint         - ESLint code quality checks' && echo '  lint:fix     - Auto-fix linting issues' && echo '  format       - Prettier code formatting' && echo '  format:check - Check Prettier formatting' && echo '  type-check   - TypeScript type validation' && echo '' && echo 'For detailed descriptions, see CLAUDE.md'",
     "prepublishOnly": "npm run release:validate"
