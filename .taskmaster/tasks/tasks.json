@@ -1057,7 +1057,7 @@
         "description": "Design and implement a comprehensive plugin system that transforms Nexus into a central AI integration hub supporting multiple providers (Anthropic, OpenAI, Perplexity), diverse tool categories (code generation, data analysis, research), and third-party integrations.",
         "details": "Implement a modular plugin architecture to extend Nexus beyond OpenRouter search: 1) Design plugin interface specification defining standard contracts for AI providers, tools, and integrations with TypeScript interfaces for PluginProvider, PluginTool, and PluginConfig. Create plugin lifecycle management (load, initialize, execute, cleanup) with dependency injection support. 2) Implement AI provider plugins starting with direct integrations for Anthropic Claude API, OpenAI GPT API, and Perplexity API, each implementing the PluginProvider interface with authentication, rate limiting, and error handling. Create provider-agnostic tool execution layer that routes requests to appropriate providers based on configuration. 3) Develop tool category plugins beyond search including: code generation tools (code completion, refactoring, documentation), data analysis tools (CSV processing, statistical analysis, visualization), and research tools (academic paper search, fact checking, citation generation). Each tool category implements standardized input/output schemas using Zod validation. 4) Create plugin registry and discovery system with dynamic loading capabilities, configuration management via JSON/YAML files, and plugin dependency resolution. Implement plugin marketplace preparation with metadata schemas for versioning, compatibility, and documentation. 5) Design extensible configuration system supporting per-plugin settings, environment variable overrides, and runtime reconfiguration. Add plugin health monitoring, performance metrics collection, and graceful degradation when plugins fail. 6) Implement plugin SDK for third-party developers with comprehensive documentation, TypeScript types, testing utilities, and example implementations. Create plugin validation and sandboxing mechanisms to ensure security and stability.",
         "testStrategy": "Validate plugin system implementation through comprehensive testing: 1) Test plugin interface compliance by creating mock plugins for each provider type and verifying they implement required contracts correctly. Test plugin lifecycle management with load/unload scenarios and dependency resolution. 2) Validate AI provider plugins by testing direct API integrations with Anthropic, OpenAI, and Perplexity using real API keys in isolated test environments. Verify authentication, rate limiting, error handling, and response formatting consistency across providers. 3) Test tool category plugins by executing code generation, data analysis, and research tools with various input scenarios and validating output schemas. Test cross-provider tool execution to ensure provider-agnostic functionality. 4) Verify plugin registry functionality by testing dynamic plugin loading, configuration management, and dependency resolution with complex plugin dependency graphs. Test plugin discovery and metadata validation. 5) Conduct integration testing by running Nexus with multiple plugins simultaneously, testing MCP server functionality with extended tool sets, and verifying performance under load. Test graceful degradation when individual plugins fail. 6) Validate plugin SDK by creating sample third-party plugins following SDK documentation and testing plugin development workflow from creation to deployment.",
-        "status": "pending",
+        "status": "deferred",
         "dependencies": [
           17,
           6,
@@ -1205,11 +1205,67 @@
             "testStrategy": "Execute full CI/CD pipeline simulation to validate the complete refactored script system works end-to-end"
           }
         ]
+      },
+      {
+        "id": 22,
+        "title": "Comprehensive Documentation Audit and Accuracy Review",
+        "description": "Conduct a thorough review of all project documentation including README files, CLAUDE.md, package.json descriptions, code comments, and other documentation to identify and correct inaccuracies, inconsistencies, and outdated information following the recent rebranding and modernization efforts.",
+        "details": "Execute comprehensive documentation audit and correction process: 1) **Package Documentation Review**: Audit package.json description, keywords, and metadata to ensure alignment with Nexus branding and current functionality. Verify npm package description accurately reflects the MCP integration hub positioning. Review and update repository URLs, homepage links, and author information. 2) **Core Documentation Files**: Review README.md for accuracy of installation instructions (npx nexus-mcp --stdio), feature descriptions, and usage examples. Verify all code examples work with current implementation. Update CLAUDE.md to reflect current MCP protocol compliance and tool capabilities. Check for outdated references to openrouter-search branding. 3) **Code Comment Audit**: Systematically review TypeScript/JavaScript files for outdated comments, incorrect function descriptions, and deprecated code references. Update JSDoc comments to match current function signatures and behavior. Remove or update TODO comments that are no longer relevant. 4) **Configuration and Build Documentation**: Review build scripts documentation in package.json and ensure script descriptions match refactored build process from Task 21. Verify CI/CD documentation reflects current pipeline configuration. 5) **Cross-Reference Validation**: Ensure consistency between README examples, code comments, and actual implementation. Verify version numbers, dependency requirements, and compatibility statements are current. Update any references to deprecated features or removed functionality.",
+        "testStrategy": "Validate documentation accuracy through systematic verification: 1) **Functional Testing**: Execute all documented installation and usage examples in clean environments to verify they work as described. Test npx commands, configuration examples, and integration steps. 2) **Consistency Audit**: Create checklist comparing documentation claims against actual codebase functionality. Verify all mentioned features exist and work as documented. Cross-reference package.json metadata with README descriptions for alignment. 3) **Link and Reference Validation**: Test all external links, repository URLs, and documentation references to ensure they resolve correctly. Verify internal documentation cross-references are accurate. 4) **Version Compatibility Check**: Validate that documented Node.js version requirements, dependency versions, and compatibility statements match package.json and actual testing results. 5) **Brand Consistency Review**: Ensure all documentation consistently uses Nexus branding and terminology, with no remaining openrouter-search references. Verify messaging aligns with brand identity established in Task 18.",
+        "status": "done",
+        "dependencies": [
+          17,
+          18,
+          21
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit and Update Package Metadata and Configuration",
+            "description": "Review and correct the package.json file including description, keywords, metadata, repository URLs, homepage links, and author information to ensure alignment with Nexus branding and current MCP integration hub positioning. Verify build scripts and CI/CD documentation reflect the refactored build process and current pipeline configuration.",
+            "dependencies": [],
+            "details": "Conduct a detailed audit of package.json metadata fields and scripts. Confirm that descriptions and keywords accurately represent the project’s current state post-rebranding. Validate that build and deployment scripts documented in package.json correspond to the latest build process changes from Task 21. Update CI/CD documentation to match the current pipeline setup.",
+            "status": "done",
+            "testStrategy": "Verify package metadata by publishing to a test npm registry or using npm pack to inspect metadata. Run build and deployment scripts in a staging environment to confirm documentation accuracy."
+          },
+          {
+            "id": 2,
+            "title": "Review and Correct Core Documentation Files",
+            "description": "Examine README.md and CLAUDE.md files for accuracy, updating installation instructions, feature descriptions, usage examples, and protocol compliance details. Remove outdated references to previous branding such as openrouter-search and ensure all code examples function correctly with the current implementation.",
+            "dependencies": [
+              1
+            ],
+            "details": "Check README.md for correct installation commands (e.g., npx nexus-mcp --stdio), verify that feature descriptions and usage examples reflect the current software capabilities, and update CLAUDE.md to align with the latest MCP protocol compliance and tool features. Remove or replace any legacy branding mentions.",
+            "status": "done",
+            "testStrategy": "Execute all installation and usage commands from README.md in a clean environment to confirm correctness. Validate protocol compliance statements against current MCP specifications."
+          },
+          {
+            "id": 3,
+            "title": "Conduct Code Comment and Cross-Reference Validation",
+            "description": "Systematically review TypeScript/JavaScript source files to update or remove outdated comments, correct function descriptions, and align JSDoc comments with current function signatures and behavior. Cross-validate consistency between code comments, README examples, and actual implementation including version numbers, dependencies, and compatibility statements.",
+            "dependencies": [
+              2
+            ],
+            "details": "Perform a thorough audit of inline code comments and JSDoc annotations to ensure they accurately describe current code behavior. Remove obsolete TODO comments and deprecated references. Cross-check all documentation references against the actual codebase to ensure consistency and correctness.",
+            "status": "done",
+            "testStrategy": "Use automated tools to extract and validate JSDoc comments against function signatures. Manually verify cross-references between documentation and code examples for accuracy."
+          },
+          {
+            "id": 4,
+            "title": "Add license file",
+            "description": "Research and add an appropriate open source license file to the project",
+            "details": "Use tm research to determine the most suitable license for this TypeScript MCP server project, considering permissiveness and compatibility with the ecosystem",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-20T01:19:01.836Z",
-      "updated": "2025-06-21T01:10:09.077Z",
+      "updated": "2025-06-21T15:22:32.598Z",
       "description": "Tasks for master context"
     }
   }

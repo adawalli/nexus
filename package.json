@@ -1,10 +1,11 @@
 {
   "name": "nexus-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Nexus MCP server - Intelligent AI model search and discovery with OpenRouter integration",
   "main": "dist/index.js",
   "bin": {
-    "nexus": "dist/cli.js"
+    "nexus": "dist/cli.js",
+    "nexus-mcp": "dist/cli.js"
   },
   "type": "module",
   "engines": {
@@ -67,11 +68,11 @@
     "discovery",
     "model-context-protocol"
   ],
-  "author": "",
+  "author": "Adam Wallis",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adawalli/nexus.git"
+    "url": "https://github.com/adawalli/nexus.git"
   },
   "homepage": "https://github.com/adawalli/nexus#readme",
   "bugs": {
