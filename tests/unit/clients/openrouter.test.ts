@@ -65,9 +65,7 @@ describe('OpenRouterClient', () => {
       expect(headers['Authorization']).toBe('Bearer sk-or-test-key-123');
       expect(headers['Content-Type']).toBe('application/json');
       expect(headers['User-Agent']).toBe('nexus-mcp/1.0.0');
-      expect(headers['HTTP-Referer']).toBe(
-        'https://github.com/anthropics/nexus-mcp'
-      );
+      expect(headers['HTTP-Referer']).toBe('https://github.com/adawalli/nexus');
       expect(headers['X-Title']).toBe('Nexus Search MCP');
     });
 
