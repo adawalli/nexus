@@ -36,6 +36,7 @@ repos:
         language: system
         files: \.(ts|tsx)$
         require_serial: false
+        pass_filenames: false
 
       - id: vitest
         name: Vitest Tests
@@ -43,3 +44,4 @@ repos:
         language: system
         files: \.(ts|tsx)$
         require_serial: false
+        pass_filenames: false
