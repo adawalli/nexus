@@ -10,6 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
+[![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/adawalli/nexus)](https://coderabbit.ai)
 
 _Intelligent AI model search and discovery with zero-install simplicity_
 
