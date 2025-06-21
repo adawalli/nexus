@@ -1,6 +1,6 @@
 {
   "name": "nexus-mcp",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Nexus MCP server - Intelligent AI model search and discovery with OpenRouter integration",
   "main": "dist/index.js",
   "bin": {

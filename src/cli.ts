@@ -1,4 +1,7 @@
 import { parseArgs } from 'node:util';
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { createServer } from './index.js';
 
@@ -24,7 +27,25 @@ Examples:
 }
 
 function printVersion() {
-  console.log(`nexus-mcp v1.0.0`);
+  try {
+    // Get the current file path and resolve package.json location
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const projectRoot = dirname(dirname(currentFilePath));
+    const packageJsonPath = join(projectRoot, 'package.json');
+
+    // Read and parse package.json
+    const packageJsonContent = readFileSync(packageJsonPath, 'utf-8');
+    const packageJson = JSON.parse(packageJsonContent);
+
+    if (packageJson.version) {
+      console.log(`nexus-mcp v${packageJson.version}`);
+    } else {
+      console.log('nexus-mcp (version unavailable)');
+    }
+  } catch {
+    // Fallback if package.json cannot be read
+    console.log('nexus-mcp (version unavailable)');
+  }
 }
 
 async function main() {

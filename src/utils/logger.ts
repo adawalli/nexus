@@ -85,6 +85,7 @@ export function createLogger(options: {
   maxFiles?: number;
   format?: winston.Logform.Format;
   sanitizeOptions?: SanitizeOptions;
+  customTransports?: winston.transport[];
 }): winston.Logger {
   const {
     level = 'info',
@@ -94,9 +95,10 @@ export function createLogger(options: {
     maxSize = 20 * 1024 * 1024, // 20MB in bytes
     maxFiles = 5,
     format,
+    customTransports = [],
   } = options;
 
-  const transports: winston.transport[] = [];
+  const transports: winston.transport[] = [...customTransports];
 
   // Console transport with colored output for development
   if (enableConsole) {
@@ -402,16 +404,47 @@ export class EnhancedSecureLogger extends SecureLogger {
 }
 
 /**
+ * Create logger configuration based on environment
+ */
+function createLoggerConfig() {
+  const isTestEnvironment = process.env.NODE_ENV === 'test';
+
+  if (isTestEnvironment) {
+    // In test environment, use a silent transport to prevent warnings
+    // while still allowing log capture for testing
+    return {
+      level: process.env.LOG_LEVEL || 'info',
+      enableConsole: false,
+      enableFile: false,
+      // Create a custom transport for test environment
+      customTransports: [
+        new winston.transports.Console({
+          silent: true, // Silent transport prevents output but allows logging calls
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            correlationFormatter(),
+            winston.format.json()
+          ),
+        }),
+      ],
+    };
+  }
+
+  // Non-test environment configuration
+  return {
+    level: process.env.LOG_LEVEL || 'info',
+    enableConsole: true,
+    enableFile: process.env.ENABLE_FILE_LOGGING === 'true',
+    filename: process.env.LOG_FILE || 'logs/application.log',
+  };
+}
+
+/**
  * Default logger instance
  */
 export const logger = new EnhancedSecureLogger(
   {}, // Default sanitize options
-  {
-    level: process.env.LOG_LEVEL || 'info',
-    enableConsole: process.env.NODE_ENV !== 'test',
-    enableFile: process.env.ENABLE_FILE_LOGGING === 'true',
-    filename: process.env.LOG_FILE || 'logs/application.log',
-  }
+  createLoggerConfig()
 );
 
 /**

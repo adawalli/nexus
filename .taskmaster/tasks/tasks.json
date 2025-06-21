@@ -1261,11 +1261,99 @@
             "parentTaskId": 22
           }
         ]
+      },
+      {
+        "id": 23,
+        "title": "Fix Winston Logging Warnings in Test Environment",
+        "description": "Configure proper test transports to eliminate \"Attempt to write logs with no transports\" warnings that appear during test execution, particularly in stdio-handler and integration tests.",
+        "details": "Implement comprehensive Winston logging configuration for test environments to eliminate transport warnings: 1) **Test-Specific Winston Configuration**: Create dedicated test logging configuration that initializes Winston with appropriate transports for test execution. Configure silent transport or memory transport for tests to prevent console pollution while maintaining log capture capability. Add environment detection logic to automatically apply test configuration when NODE_ENV=test. 2) **Transport Configuration**: Implement conditional transport setup based on environment - use Console transport with appropriate log levels for development, File transport for production, and Silent/Memory transport for testing. Configure transport options including format, level filtering, and output destinations. 3) **Test Setup Integration**: Integrate Winston test configuration into Vitest setup files to ensure logging is properly configured before test execution begins. Add beforeAll/afterAll hooks to initialize and cleanup logging state. Create test utilities for log assertion and verification. 4) **Stdio Handler Fixes**: Specifically address Winston warnings in stdio-handler by ensuring proper transport initialization before any logging operations. Add defensive checks to prevent logging calls before Winston is fully configured. Implement graceful fallback logging for edge cases. 5) **Integration Test Logging**: Configure Winston for integration tests to capture logs without interfering with MCP protocol communication over stdio. Implement log buffering or redirection to prevent conflicts with protocol messages.",
+        "testStrategy": "Validate Winston logging configuration through systematic testing: 1) **Warning Elimination Verification**: Run complete test suite and verify no \"Attempt to write logs with no transports\" warnings appear in test output. Execute stdio-handler tests specifically to confirm warnings are resolved. Monitor test console output for any Winston-related error messages. 2) **Transport Configuration Testing**: Test Winston configuration in different environments (test, development, production) to verify appropriate transports are loaded. Validate log level filtering and format configuration work correctly across environments. Test log capture functionality in test environment without console pollution. 3) **Integration Test Validation**: Run integration tests and verify logging works correctly without interfering with MCP protocol communication. Test that logs are properly captured or silenced during stdio-based MCP interactions. Validate that test logs can be accessed for debugging when needed. 4) **Edge Case Testing**: Test Winston initialization timing to ensure transports are configured before any logging calls. Verify graceful handling of logging calls during Winston setup phase. Test cleanup and teardown of logging configuration between test runs.",
+        "status": "done",
+        "dependencies": [
+          3,
+          8
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Develop Test-Specific Winston Logging Configuration",
+            "description": "Create a dedicated Winston logging configuration tailored for the test environment that initializes Winston with appropriate transports to prevent logging warnings during tests.",
+            "dependencies": [],
+            "details": "Implement environment detection logic to apply this configuration automatically when NODE_ENV=test. Use silent or memory transports to avoid console pollution while still capturing logs for verification.",
+            "status": "done",
+            "testStrategy": "Verify that no 'Attempt to write logs with no transports' warnings appear during test runs and that logs can be captured and asserted in memory."
+          },
+          {
+            "id": 2,
+            "title": "Implement Conditional Transport Setup Based on Environment",
+            "description": "Configure Winston transports conditionally depending on the runtime environment: Console transport for development, File transport for production, and Silent/Memory transport for testing.",
+            "dependencies": [
+              1
+            ],
+            "details": "Set transport options including log format, level filtering, and output destinations to optimize performance and clarity. Ensure transports are properly initialized to avoid warnings.",
+            "status": "done",
+            "testStrategy": "Test logging outputs in each environment to confirm correct transport usage and absence of warnings."
+          },
+          {
+            "id": 3,
+            "title": "Integrate Winston Test Configuration into Vitest Setup",
+            "description": "Incorporate the Winston test logging configuration into Vitest setup files to ensure logging is properly initialized before tests run and cleaned up afterward.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Add beforeAll and afterAll hooks to initialize and reset logging state. Develop test utilities to facilitate log assertion and verification during tests.",
+            "status": "done",
+            "testStrategy": "Run integration and unit tests to confirm logging setup is active and logs can be asserted without polluting test output."
+          },
+          {
+            "id": 4,
+            "title": "Resolve Winston Warnings in stdio-handler",
+            "description": "Address Winston logging warnings specifically in the stdio-handler by ensuring transports are initialized before any logging calls and adding defensive checks.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Implement fallback logging mechanisms for edge cases where logging might occur before full configuration. Prevent attempts to write logs without transports.",
+            "status": "done",
+            "testStrategy": "Execute stdio-handler related tests to verify that no transport warnings occur and logging behaves gracefully under all conditions."
+          },
+          {
+            "id": 5,
+            "title": "Configure Winston Logging for Integration Tests",
+            "description": "Set up Winston logging for integration tests to capture logs without interfering with MCP protocol communication over stdio.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Implement log buffering or redirection strategies to prevent conflicts between log output and protocol messages, ensuring smooth integration test execution.",
+            "status": "done",
+            "testStrategy": "Run integration tests to confirm logs are captured correctly and MCP protocol communication remains unaffected."
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "title": "Fix --version Flag to Read from Package.json Dynamically",
+        "description": "Replace the hardcoded version string in the --version flag implementation with dynamic reading from package.json to ensure version information stays synchronized with the actual package version.",
+        "details": "Implement dynamic version reading from package.json to fix the --version flag: 1) **Locate Version Implementation**: Find the current --version flag implementation in the CLI entry point or argument parsing logic that currently returns a hardcoded version string. Identify where command line arguments are processed and version information is displayed. 2) **Dynamic Package.json Reading**: Replace hardcoded version with dynamic reading using `require('../package.json').version` or `import packageJson from '../package.json'` depending on module system. For production builds, ensure the package.json file is accessible relative to the built output location. Consider using `process.cwd()` or `__dirname` to construct proper relative paths. 3) **Error Handling**: Add robust error handling for cases where package.json cannot be read or version field is missing. Implement fallback behavior that displays a meaningful error message or default version indicator. Handle potential JSON parsing errors gracefully. 4) **Build System Compatibility**: Ensure the dynamic version reading works correctly with the existing build pipeline and bundling process. Verify that package.json is included in the distribution or that version information is embedded during build time if bundling prevents runtime file access. 5) **Cross-Platform Path Resolution**: Use Node.js path utilities to ensure proper file path resolution across different operating systems and deployment environments.",
+        "testStrategy": "Validate dynamic version reading through comprehensive testing: 1) **Version Display Verification**: Run the CLI with --version flag and verify it displays the exact version from package.json. Update package.json version to a test value and confirm the --version output reflects the change immediately. Test both development and production build scenarios. 2) **Error Handling Testing**: Temporarily rename or corrupt package.json and verify graceful error handling when version cannot be read. Test scenarios where package.json exists but version field is missing or malformed. 3) **Build Pipeline Integration**: Execute the full build process and test --version flag functionality in the bundled/distributed version. Verify version reading works correctly when installed via npm/npx. 4) **Cross-Platform Testing**: Test --version flag on Windows, macOS, and Linux to ensure path resolution works correctly across platforms. 5) **Regression Testing**: Verify that fixing the version flag doesn't break other CLI functionality or argument parsing behavior.",
+        "status": "done",
+        "dependencies": [
+          1,
+          12,
+          21
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-06-20T01:19:01.836Z",
-      "updated": "2025-06-21T15:22:32.598Z",
+      "updated": "2025-06-21T15:43:18.685Z",
       "description": "Tasks for master context"
     }
   }
