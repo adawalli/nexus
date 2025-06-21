@@ -47,7 +47,7 @@ export class OpenRouterClient {
       Authorization: `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json',
       'User-Agent': config.userAgent || 'nexus-mcp/1.0.0',
-      'HTTP-Referer': 'https://github.com/anthropics/nexus-mcp',
+      'HTTP-Referer': 'https://github.com/adawalli/nexus',
       'X-Title': 'Nexus Search MCP',
     };
   }
