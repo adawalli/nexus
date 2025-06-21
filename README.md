@@ -115,8 +115,8 @@ For local development or customization:
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/nexus-mcp.git
-cd nexus-mcp
+git clone https://github.com/adawalli/nexus.git
+cd nexus
 ```
 
 2. Install dependencies:
@@ -433,18 +433,18 @@ We welcome contributions from developers of all experience levels!
 
 ### 🐛 **Report Issues**
 
-- [Bug Reports](https://github.com/nexus-mcp/issues/new?template=bug_report.yml)
-- [Feature Requests](https://github.com/nexus-mcp/issues/new?template=feature_request.yml)
-- [Ask Questions](https://github.com/nexus-mcp/issues/new?template=question.yml)
+- [Bug Reports](https://github.com/adawalli/nexus/issues/new)
+- [Feature Requests](https://github.com/adawalli/nexus/issues/new)
+- [Ask Questions](https://github.com/adawalli/nexus/issues/new)
 
 </td>
 <td width="33%">
 
 ### 💬 **Join Community**
 
-- [GitHub Discussions](https://github.com/nexus-mcp/discussions)
+- [GitHub Discussions](https://github.com/adawalli/nexus/discussions)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Roadmap & Project Board](https://github.com/nexus-mcp/projects)
+- [Roadmap & Project Board](https://github.com/adawalli/nexus/projects)
 
 </td>
 </tr>
@@ -454,7 +454,7 @@ We welcome contributions from developers of all experience levels!
 
 Contributors are recognized in our:
 
-- [Contributors list](https://github.com/nexus-mcp/graphs/contributors)
+- [Contributors list](https://github.com/adawalli/nexus/graphs/contributors)
 - Release notes for significant contributions
 - Community spotlights and testimonials
 
@@ -471,10 +471,10 @@ Contributors are recognized in our:
 
 | 💬 **Need Help?**    | 🔗 **Resource**                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Quick Questions**  | [GitHub Discussions](https://github.com/nexus-mcp/discussions)                                       |
-| **Bug Reports**      | [GitHub Issues](https://github.com/nexus-mcp/issues)                                                 |
+| **Quick Questions**  | [GitHub Discussions](https://github.com/adawalli/nexus/discussions)                                  |
+| **Bug Reports**      | [GitHub Issues](https://github.com/adawalli/nexus/issues)                                            |
 | **Documentation**    | [OpenRouter Docs](https://openrouter.ai/docs) • [MCP Specification](https://modelcontextprotocol.io) |
-| **Feature Requests** | [Enhancement Proposals](https://github.com/nexus-mcp/issues/new?template=feature_request.yml)        |
+| **Feature Requests** | [Enhancement Proposals](https://github.com/adawalli/nexus/issues/new)                                |
 
 </div>
 
@@ -488,7 +488,7 @@ Contributors are recognized in our:
 
 **Made with ❤️ by the open source community**
 
-[⭐ Star us on GitHub](https://github.com/nexus-mcp) • [📦 View on NPM](https://www.npmjs.com/package/nexus-mcp) • [📚 Read the Docs](CLAUDE.md)
+[⭐ Star us on GitHub](https://github.com/adawalli/nexus) • [📦 View on NPM](https://www.npmjs.com/package/nexus-mcp) • [📚 Read the Docs](CLAUDE.md)
 
 _Nexus: AI integration without the complexity_
 
