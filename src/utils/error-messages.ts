@@ -4,6 +4,8 @@
 
 import { BaseError, ERROR_CODES, ErrorCode } from '../errors/index.js';
 
+import { ZodErrorParser } from './zod-error-parser.js';
+
 /**
  * Severity levels for error messages
  */
@@ -255,6 +257,25 @@ export function createErrorMessage(
   correlationId?: string
 ): LocalizedErrorMessage {
   let template: ErrorMessageTemplate;
+
+  // Handle Zod validation errors with enhanced parsing
+  if (ZodErrorParser.isZodError(error)) {
+    const parsedError = ZodErrorParser.createUserFriendlyMessage(error);
+
+    return {
+      title: 'Validation Error',
+      message: parsedError.message,
+      suggestion:
+        parsedError.details?.[0]?.suggestion ||
+        'Please check your input parameters and try again.',
+      technicalDetails: parsedError.details
+        ? JSON.stringify(parsedError.details, null, 2)
+        : undefined,
+      severity: 'error',
+      timestamp: new Date().toISOString(),
+      correlationId,
+    };
+  }
 
   if (error instanceof BaseError) {
     template =

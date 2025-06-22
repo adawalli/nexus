@@ -1349,11 +1349,57 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Fix Generic Error Handling in Nexus MCP Tool with Enhanced Validation Messages",
+        "description": "Resolve the generic error handling issue where invalid parameters like misspelled model names return \"An unexpected error occurred\" instead of specific, actionable error messages by updating MCP schema, enhancing Zod error parsing, and improving user-facing validation feedback.",
+        "details": "Implement comprehensive error handling improvements for the Nexus MCP tool: 1) **MCP Schema Update**: Update the MCP tool schema to advertise all 6 supported models instead of only perplexity/sonar. Locate the tool definition in the MCP server registration and expand the model parameter enum to include all valid options (perplexity/sonar, claude, gpt, gemini, etc.). Add detailed parameter descriptions and validation constraints to the schema. 2) **Enhanced Zod Error Parsing**: Create a dedicated error parsing utility that extracts specific validation details from Zod errors. Implement error message mapping that converts technical Zod validation failures into user-friendly messages. Handle common validation scenarios like invalid model names, missing required parameters, and type mismatches with specific guidance. 3) **Improved Error Response Generation**: Replace generic \"An unexpected error occurred\" responses with contextual error messages that include the invalid value, expected options, and corrective actions. Implement error categorization (validation errors, API errors, configuration errors) with appropriate response formatting. 4) **Parameter Validation Enhancement**: Strengthen model name validation to provide suggestions for misspelled models using fuzzy matching or edit distance algorithms. Add comprehensive parameter validation that checks for required fields, valid ranges, and proper formats before API calls. 5) **Error Context Preservation**: Ensure error context is preserved through the MCP protocol response chain, maintaining specific validation details from Zod through to the final user-facing message.",
+        "testStrategy": "Validate error handling improvements through comprehensive testing: 1) **Invalid Model Name Testing**: Test various misspelled model names (e.g., \"gpt4\", \"claude-3\", \"perplexity-sonar\") and verify specific error messages indicate valid options and suggest corrections. Confirm the error response includes the invalid value and lists all supported models. 2) **Schema Validation Testing**: Verify the updated MCP schema correctly advertises all 6 supported models by inspecting the tools/list response and confirming parameter definitions match validation logic. Test that MCP clients receive accurate schema information for auto-completion and validation. 3) **Zod Error Parsing Testing**: Create unit tests for the error parsing utility with various Zod validation failure scenarios including missing required fields, invalid types, and constraint violations. Verify each Zod error type produces a specific, actionable error message. 4) **End-to-End Error Flow Testing**: Test complete error handling flow from invalid MCP tool calls through Zod validation to final error responses. Verify no generic \"unexpected error\" messages appear for validation failures. 5) **Error Message Quality Assessment**: Review all error messages for clarity, actionability, and user-friendliness. Ensure error responses provide clear guidance on how to correct the issue and include relevant context like valid parameter values.",
+        "status": "done",
+        "dependencies": [
+          8,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update MCP Tool Schema to Include All Supported Models",
+            "description": "Expand the MCP tool schema to advertise all six supported models instead of only perplexity and sonar. Modify the tool definition in the MCP server registration to update the model parameter enum with all valid options such as perplexity, sonar, claude, gpt, gemini, etc. Add detailed parameter descriptions and validation constraints to the schema to ensure accurate parameter validation.",
+            "dependencies": [],
+            "details": "Locate the MCP server tool registration code and update the model parameter enumeration to include all supported models. Enhance the schema with descriptive metadata and validation rules to prevent invalid model names at the schema level.",
+            "status": "done",
+            "testStrategy": "Validate that the MCP schema correctly lists all supported models and rejects unsupported ones. Test schema validation errors for invalid model names."
+          },
+          {
+            "id": 2,
+            "title": "Implement Enhanced Zod Error Parsing and User-Friendly Validation Messages",
+            "description": "Develop a dedicated error parsing utility to extract specific validation details from Zod errors. Map technical Zod validation failures into clear, user-friendly error messages that provide actionable guidance. Handle common validation issues such as invalid model names, missing required parameters, and type mismatches with tailored messages.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create a utility module that intercepts Zod validation errors and parses their details. Implement a mapping layer that converts these details into contextual messages explaining the error and suggesting corrective actions. Integrate this utility into the MCP tool request validation flow.",
+            "status": "done",
+            "testStrategy": "Simulate various validation failures and verify that the returned error messages are specific, clear, and helpful to the user."
+          },
+          {
+            "id": 3,
+            "title": "Enhance Error Response Generation with Contextual and Categorized Messages",
+            "description": "Replace generic error responses with contextual messages that include invalid values, expected options, and corrective suggestions. Implement error categorization (validation errors, API errors, configuration errors) and format responses accordingly. Preserve error context through the MCP protocol response chain to maintain detailed validation information from Zod to the final user-facing message. Additionally, strengthen parameter validation by adding fuzzy matching for model names to suggest corrections for misspellings.",
+            "dependencies": [
+              2
+            ],
+            "details": "Modify the MCP tool error handling logic to generate detailed error responses. Use fuzzy matching algorithms to detect and suggest corrections for misspelled model names. Ensure error context is maintained end-to-end in the MCP protocol responses to provide comprehensive feedback to users.",
+            "status": "done",
+            "testStrategy": "Test error responses for various invalid inputs, verifying that messages are informative, categorized, and include suggestions. Confirm that error context is preserved and correctly displayed to the user."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-20T01:19:01.836Z",
-      "updated": "2025-06-21T15:43:18.685Z",
+      "updated": "2025-06-22T00:14:45.122Z",
       "description": "Tasks for master context"
     }
   }

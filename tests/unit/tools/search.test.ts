@@ -205,7 +205,7 @@ describe('SearchTool', () => {
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('validation');
-      expect(result.error).toContain('Query cannot be empty');
+      expect(result.error).toContain('must be at least 1 character');
     });
 
     it('should handle authentication errors', async () => {

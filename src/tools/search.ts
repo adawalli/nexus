@@ -23,6 +23,7 @@ import {
   RequestDeduplicator,
   createRequestKey,
 } from '../utils/deduplication.js';
+import { ZodErrorParser } from '../utils/zod-error-parser.js';
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -107,10 +108,19 @@ export class SearchTool {
       });
     } catch (error) {
       logger.warn('Input validation failed', { error });
-      return createErrorResponse(
-        error instanceof Error ? error.message : 'Invalid input format',
-        'validation'
-      );
+
+      // Use enhanced Zod error parsing for better user experience
+      const parsedError = ZodErrorParser.createUserFriendlyMessage(error);
+
+      // Log detailed validation errors for debugging
+      if (parsedError.isValidationError && parsedError.details) {
+        logger.debug('Detailed validation errors', {
+          errors: parsedError.details,
+          originalInput: input,
+        });
+      }
+
+      return createErrorResponse(parsedError.message, 'validation');
     }
 
     // Step 2: Generate keys for cache and deduplication
