@@ -494,4 +494,6 @@ Contributors are recognized in our:
 
 _Nexus: AI integration without the complexity_
 
+[![Star History Chart](https://api.star-history.com/svg?repos=adawalli/nexus&type=Date)](https://star-history.com/#adawalli/nexus&Date)
+
 </div>
