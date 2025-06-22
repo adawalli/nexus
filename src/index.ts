@@ -16,6 +16,8 @@ import { ConfigurationManager, ConfigurationError } from './config/index.js';
 import { createSearchTool } from './tools/search.js';
 import { validateSearchResponse } from './types/search.js';
 import { JSONValidator, safeStringify } from './utils/json-validator.js';
+import { validateSearchInput } from './schemas/search.js';
+import { ZodErrorParser } from './utils/zod-error-parser.js';
 import {
   logger,
   withCorrelationId,
@@ -24,7 +26,6 @@ import {
 import {
   MCPErrorHandler,
   withMCPErrorHandling,
-  validateMCPRequest,
 } from './utils/mcp-error-handler.js';
 import { stdioHandler } from './utils/stdio-handler.js';
 
@@ -210,16 +211,24 @@ server.setRequestHandler(
             );
           }
 
-          // Validate search request parameters
-          validateMCPRequest(request.params.arguments, {
-            required: ['query'],
-            properties: {
-              query: { type: 'string' },
-              model: { type: 'string' },
-              maxTokens: { type: 'number' },
-              temperature: { type: 'number' },
-            },
-          });
+          // Validate search request parameters using Zod schema
+          try {
+            validateSearchInput(request.params.arguments);
+          } catch (error) {
+            logger.warn('Search parameter validation failed', { error });
+
+            // Use enhanced Zod error parsing for better user experience
+            const parsedError = ZodErrorParser.createUserFriendlyMessage(error);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: parsedError.message,
+                },
+              ],
+            };
+          }
 
           try {
             logger.info('Search request received', {
@@ -247,10 +256,16 @@ server.setRequestHandler(
                 errorType: searchResponse.errorType,
               });
 
-              return MCPErrorHandler.createSafeResponse(
-                new Error(`Search failed: ${searchResponse.error}`),
-                { method: 'search', correlationId }
-              );
+              // Return the specific error message directly instead of wrapping it
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: searchResponse.error,
+                  },
+                ],
+                isError: true,
+              };
             }
 
             const result = searchResponse.result!;

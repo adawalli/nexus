@@ -88,7 +88,7 @@ export class OpenRouterClient {
     options: RequestInit = {}
   ): Promise<T> {
     if (!this.validateApiKey()) {
-      throw new Error('Invalid OpenRouter API key format');
+      throw new AuthenticationError('Invalid OpenRouter API key format');
     }
 
     let lastError: Error | null = null;
@@ -302,7 +302,7 @@ export class OpenRouterClient {
     }
 
     if (!this.validateApiKey()) {
-      throw new Error('Invalid OpenRouter API key format');
+      throw new AuthenticationError('Invalid OpenRouter API key format');
     }
 
     const url = `${this.baseUrl}/chat/completions`;

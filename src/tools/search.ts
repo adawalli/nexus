@@ -180,6 +180,32 @@ export class SearchTool {
         query: validatedInput.query,
       });
 
+      // Handle OpenRouter API errors specifically
+      if (error instanceof AuthenticationError) {
+        return createErrorResponse(
+          'Authentication failed: Invalid API key',
+          'auth'
+        );
+      }
+
+      if (error instanceof RateLimitError) {
+        return createErrorResponse(
+          `Rate limit exceeded${error.retryAfter ? ` (retry after ${error.retryAfter}s)` : ''}`,
+          'rate_limit'
+        );
+      }
+
+      if (error instanceof ServerError) {
+        return createErrorResponse(
+          'OpenRouter service temporarily unavailable',
+          'api'
+        );
+      }
+
+      if (error instanceof OpenRouterApiError) {
+        return createErrorResponse(`API error: ${error.message}`, 'api');
+      }
+
       // Handle deduplication-specific errors
       if (error instanceof Error && error.message.includes('timed out')) {
         return createErrorResponse(
@@ -198,8 +224,28 @@ export class SearchTool {
         );
       }
 
-      // Re-throw other errors to be handled by the general error handling
-      throw error;
+      // Handle timeout and network errors
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          return createErrorResponse(
+            'Request timed out - please try again',
+            'timeout'
+          );
+        }
+
+        if (error.message.includes('Network error')) {
+          return createErrorResponse(
+            'Network error - please check your connection',
+            'network'
+          );
+        }
+      }
+
+      // Generic error fallback
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        'unknown'
+      );
     }
   }
 
