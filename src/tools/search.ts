@@ -23,7 +23,7 @@ import {
   RequestDeduplicator,
   createRequestKey,
 } from '../utils/deduplication.js';
-import { ZodErrorParser } from '../utils/zod-error-parser.js';
+import { createUserFriendlyMessage } from '../utils/zod-error-parser.js';
 
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -110,7 +110,7 @@ export class SearchTool {
       logger.warn('Input validation failed', { error });
 
       // Use enhanced Zod error parsing for better user experience
-      const parsedError = ZodErrorParser.createUserFriendlyMessage(error);
+      const parsedError = createUserFriendlyMessage(error);
 
       // Log detailed validation errors for debugging
       if (parsedError.isValidationError && parsedError.details) {

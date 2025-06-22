@@ -17,7 +17,7 @@ import { createSearchTool } from './tools/search.js';
 import { validateSearchResponse } from './types/search.js';
 import { JSONValidator, safeStringify } from './utils/json-validator.js';
 import { validateSearchInput } from './schemas/search.js';
-import { ZodErrorParser } from './utils/zod-error-parser.js';
+import { createUserFriendlyMessage } from './utils/zod-error-parser.js';
 import {
   logger,
   withCorrelationId,
@@ -218,7 +218,7 @@ server.setRequestHandler(
             logger.warn('Search parameter validation failed', { error });
 
             // Use enhanced Zod error parsing for better user experience
-            const parsedError = ZodErrorParser.createUserFriendlyMessage(error);
+            const parsedError = createUserFriendlyMessage(error);
 
             return {
               content: [

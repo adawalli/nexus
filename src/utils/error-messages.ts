@@ -4,7 +4,7 @@
 
 import { BaseError, ERROR_CODES, ErrorCode } from '../errors/index.js';
 
-import { ZodErrorParser } from './zod-error-parser.js';
+import { isZodError, createUserFriendlyMessage } from './zod-error-parser.js';
 
 /**
  * Severity levels for error messages
@@ -259,8 +259,8 @@ export function createErrorMessage(
   let template: ErrorMessageTemplate;
 
   // Handle Zod validation errors with enhanced parsing
-  if (ZodErrorParser.isZodError(error)) {
-    const parsedError = ZodErrorParser.createUserFriendlyMessage(error);
+  if (isZodError(error)) {
+    const parsedError = createUserFriendlyMessage(error);
 
     return {
       title: 'Validation Error',
