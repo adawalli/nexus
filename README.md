@@ -7,6 +7,7 @@
 **AI integration without the complexity**
 
 [![npm version](https://img.shields.io/npm/v/nexus-mcp.svg)](https://www.npmjs.com/package/nexus-mcp)
+![NPM Downloads](https://img.shields.io/npm/dt/nexus-mcp?style=flat-square&logo=npm&label=downloads)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
