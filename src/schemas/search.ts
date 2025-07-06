@@ -5,14 +5,7 @@ import type { PerplexityModelId } from '../types/openrouter.js';
 /**
  * Supported Perplexity models for search operations
  */
-export const SUPPORTED_MODELS: PerplexityModelId[] = [
-  'perplexity/sonar',
-  'perplexity/sonar-small-chat',
-  'perplexity/sonar-medium-chat',
-  'perplexity/sonar-large-chat',
-  'perplexity/sonar-small-online',
-  'perplexity/sonar-medium-online',
-];
+export const SUPPORTED_MODELS: PerplexityModelId[] = ['perplexity/sonar'];
 
 /**
  * Zod schema for search tool input validation
@@ -31,14 +24,7 @@ export const SearchToolInputSchema = z.object({
    * Model selection (optional, defaults to sonar model)
    */
   model: z
-    .enum([
-      'perplexity/sonar',
-      'perplexity/sonar-small-chat',
-      'perplexity/sonar-medium-chat',
-      'perplexity/sonar-large-chat',
-      'perplexity/sonar-small-online',
-      'perplexity/sonar-medium-online',
-    ] as const)
+    .enum(['perplexity/sonar'] as const)
     .default('perplexity/sonar')
     .describe('Perplexity model to use for search'),
 

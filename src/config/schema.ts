@@ -244,14 +244,7 @@ function validateModel(value: unknown): string | null {
   if (stringError) return stringError;
 
   const model = value as string;
-  const validModels = [
-    'perplexity/sonar',
-    'perplexity/sonar-small-chat',
-    'perplexity/sonar-medium-chat',
-    'perplexity/sonar-large-chat',
-    'perplexity/sonar-small-online',
-    'perplexity/sonar-medium-online',
-  ];
+  const validModels = ['perplexity/sonar'];
 
   if (!validModels.includes(model)) {
     return `Must be one of: ${validModels.join(', ')}`;

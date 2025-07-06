@@ -154,14 +154,7 @@ server.setRequestHandler(
               model: {
                 type: 'string',
                 description: 'Perplexity model to use for search',
-                enum: [
-                  'perplexity/sonar',
-                  'perplexity/sonar-small-chat',
-                  'perplexity/sonar-medium-chat',
-                  'perplexity/sonar-large-chat',
-                  'perplexity/sonar-small-online',
-                  'perplexity/sonar-medium-online',
-                ],
+                enum: ['perplexity/sonar'],
                 default: 'perplexity/sonar',
               },
               maxTokens: {

@@ -207,15 +207,10 @@ describe('Search Schema Validation', () => {
   describe('SUPPORTED_MODELS', () => {
     it('should contain expected Perplexity models', () => {
       expect(SUPPORTED_MODELS).toContain('perplexity/sonar');
-      expect(SUPPORTED_MODELS).toContain('perplexity/sonar-small-chat');
-      expect(SUPPORTED_MODELS).toContain('perplexity/sonar-medium-chat');
-      expect(SUPPORTED_MODELS).toContain('perplexity/sonar-large-chat');
-      expect(SUPPORTED_MODELS).toContain('perplexity/sonar-small-online');
-      expect(SUPPORTED_MODELS).toContain('perplexity/sonar-medium-online');
     });
 
     it('should have correct number of models', () => {
-      expect(SUPPORTED_MODELS).toHaveLength(6);
+      expect(SUPPORTED_MODELS).toHaveLength(1);
     });
   });
 

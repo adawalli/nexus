@@ -12,13 +12,7 @@ export type FinishReason =
   | 'tool_calls'
   | null;
 
-export type PerplexityModelId =
-  | 'perplexity/sonar'
-  | 'perplexity/sonar-small-chat'
-  | 'perplexity/sonar-medium-chat'
-  | 'perplexity/sonar-large-chat'
-  | 'perplexity/sonar-small-online'
-  | 'perplexity/sonar-medium-online';
+export type PerplexityModelId = 'perplexity/sonar';
 
 export interface ChatMessage {
   role: ChatRole;
