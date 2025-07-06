@@ -12,7 +12,7 @@ Usage: nexus [options]
 Nexus MCP Server - Intelligent AI model search and discovery
 
 Options:
-  --stdio     Use STDIO transport (required for MCP clients)
+  --stdio     Use STDIO transport (default: true)
   --help      Show this help message
   --version   Show version information
 
@@ -21,8 +21,8 @@ Environment Variables:
   NODE_ENV             Environment (development, production, test)
 
 Examples:
-  npx nexus-mcp --stdio
-  nexus --stdio
+  npx nexus-mcp
+  nexus
 `);
 }
 
@@ -55,7 +55,7 @@ async function main() {
       options: {
         stdio: {
           type: 'boolean',
-          default: false,
+          default: true,
         },
         help: {
           type: 'boolean',
@@ -77,12 +77,6 @@ async function main() {
     if (values.version) {
       printVersion();
       process.exit(0);
-    }
-
-    if (!values.stdio) {
-      console.error('Error: --stdio flag is required for MCP server operation');
-      printUsage();
-      process.exit(1);
     }
 
     // Check for required environment variables
