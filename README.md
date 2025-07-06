@@ -92,7 +92,7 @@ No build steps, no dependencies, no setup required:
 export OPENROUTER_API_KEY=your-api-key-here
 
 # Run the server instantly
-npx nexus-mcp --stdio
+npx nexus-mcp
 ```
 
 That's it! The server is now running and ready for MCP client connections.
@@ -107,7 +107,7 @@ npx nexus-mcp --help
 npx nexus-mcp --version
 
 # Run with your API key
-OPENROUTER_API_KEY=your-key npx nexus-mcp --stdio
+OPENROUTER_API_KEY=your-key npx nexus-mcp
 ```
 
 ## Alternative: Local Development Installation
@@ -168,7 +168,7 @@ Add this server to your Claude Code MCP settings:
   "mcpServers": {
     "nexus": {
       "command": "npx",
-      "args": ["nexus-mcp", "--stdio"],
+      "args": ["nexus-mcp"],
       "env": {
         "OPENROUTER_API_KEY": "your-api-key-here"
       }
@@ -191,7 +191,7 @@ Configure the server in Cursor's MCP settings:
 
    - **Name**: `nexus`
    - **Command**: `npx`
-   - **Args**: `["nexus-mcp", "--stdio"]`
+   - **Args**: `["nexus-mcp"]`
    - **Environment Variables**:
      - `OPENROUTER_API_KEY`: `your-api-key-here`
 
@@ -203,7 +203,7 @@ For any MCP-compatible client, use these connection details:
 
 - **Transport**: stdio
 - **Command**: `npx`
-- **Args**: `["nexus-mcp", "--stdio"]`
+- **Args**: `["nexus-mcp"]`
 - **Environment Variables**: `OPENROUTER_API_KEY=your-api-key-here`
 
 ### Alternative: Local Installation
@@ -215,7 +215,7 @@ If you prefer using a local installation (after following the local development 
   "mcpServers": {
     "nexus": {
       "command": "node",
-      "args": ["/path/to/nexus-mcp/dist/cli.js", "--stdio"],
+      "args": ["/path/to/nexus-mcp/dist/cli.js"],
       "env": {
         "OPENROUTER_API_KEY": "your-api-key-here"
       }
@@ -349,7 +349,7 @@ The server provides a configuration status resource at `config://status` that sh
 
 **MCP client can't connect to server**
 
-- Verify the `--stdio` flag is included in your MCP configuration
+- Verify your MCP configuration uses the correct command and arguments
 - Check that Node.js 16+ is available in your MCP client's environment
 - Ensure the API key is properly set in the environment variables
 
