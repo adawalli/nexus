@@ -13,6 +13,8 @@
 [![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/adawalli/nexus)](https://coderabbit.ai)
 
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/adawalli/nexus)](https://archestra.ai/mcp-catalog/adawalli__nexus)
+
 _Intelligent AI model search and discovery with zero-install simplicity_
 
 [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Contributing](#-contributing)
