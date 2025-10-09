@@ -39,7 +39,7 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered web 
 
 - NPX-based execution with zero local installation
 - Cross-platform compatibility (macOS, Linux, Windows)
-- Node.js 16+ runtime requirement
+- Node.js 18+ runtime requirement
 - Automated version updates via npm registry
 
 ### Search Capabilities
@@ -62,7 +62,7 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered web 
 
 ### Prerequisites
 
-- Node.js 16 or higher
+- Node.js 18 or higher
 - OpenRouter API key ([register at openrouter.ai](https://openrouter.ai))
 
 ### NPX Installation
@@ -273,7 +273,7 @@ The server provides a configuration status resource at `config://status` that sh
 
 **"npx: command not found"**
 
-- Ensure Node.js 16+ is installed: `node --version`
+- Ensure Node.js 18+ is installed: `node --version`
 - Update npm: `npm install -g npm@latest`
 
 **"Cannot find package 'nexus-mcp'"**
@@ -321,7 +321,7 @@ The server provides a configuration status resource at `config://status` that sh
 **MCP client can't connect to server**
 
 - Verify your MCP configuration uses the correct command and arguments
-- Check that Node.js 16+ is available in your MCP client's environment
+- Check that Node.js 18+ is available in your MCP client's environment
 - Ensure the API key is properly set in the environment variables
 
 ### Debug Logging
