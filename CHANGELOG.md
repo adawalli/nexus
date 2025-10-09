@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### BREAKING CHANGES
+
+- **Runtime Requirements**: Minimum Node.js version raised from 16.0.0 to 18.0.0. This change was necessary to support modern development dependencies (e.g., cross-env 10.x) and aligns with Node.js LTS support policy. Node.js 16 reached End-of-Life on September 11, 2023.
+
+### Changed
+
+- Updated `engines.node` in package.json to require Node.js >= 18.0.0
+- Updated all documentation to reflect Node.js 18+ requirement
+
+### Migration Guide
+
+If you are running Node.js 16, you will need to upgrade to Node.js 18 or higher before using this version. We recommend using the latest Node.js LTS version (currently Node.js 20 or 22).
+
+To upgrade Node.js:
+
+- Using nvm: `nvm install 18 && nvm use 18`
+- Using official installer: Visit [nodejs.org](https://nodejs.org/)
+
 ## [2.0.0] - 2025-07-06
 
 ### BREAKING CHANGES
