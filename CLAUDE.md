@@ -67,7 +67,6 @@ This is Nexus MCP - an intelligent AI model search and discovery server implemen
 ### Core Components
 
 1. **MCP Server Entry Point** (`src/index.ts`)
-
    - Fully implemented MCP server with complete tool and resource handlers
    - Initializes configuration management and search tool capabilities
    - Graceful shutdown handling and comprehensive error management
@@ -75,14 +74,12 @@ This is Nexus MCP - an intelligent AI model search and discovery server implemen
    - STDIO transport with enhanced error handling
 
 2. **Configuration System** (`src/config/`)
-
    - JSON schema-based environment validation (`validation.ts`)
    - Type-safe configuration management (`manager.ts`, `types.ts`)
    - Structured logging with Winston integration (`logging.ts`)
    - Environment-based configuration with masked API keys
 
 3. **Search Tool Implementation** (`src/tools/search.ts`)
-
    - Production-ready search tool with caching and deduplication
    - Request validation using Zod schemas
    - Performance metrics tracking and optimization
@@ -90,14 +87,12 @@ This is Nexus MCP - an intelligent AI model search and discovery server implemen
    - OpenRouter client integration with retry logic
 
 4. **Plugin System** (`src/plugins/interfaces.ts`)
-
    - Extensible plugin architecture for providers, tools, and integrations
    - Type-safe plugin interfaces with lifecycle management
    - Plugin discovery, loading, and health monitoring
    - Standardized error handling and performance metrics
 
 5. **Utility Infrastructure** (`src/utils/`)
-
    - JSON validation and sanitization (`json-validator.ts`)
    - MCP request/response error handling (`mcp-error-handler.ts`)
    - TTL caching system (`cache.ts`)
@@ -106,7 +101,6 @@ This is Nexus MCP - an intelligent AI model search and discovery server implemen
    - Response optimization (`response-optimizer.ts`)
 
 6. **Type System** (`src/types/`)
-
    - Complete OpenRouter API type definitions (`openrouter.ts`)
    - Search operation types and validators (`search.ts`)
    - Schema definitions with Zod validation (`src/schemas/`)
