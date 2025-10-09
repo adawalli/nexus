@@ -93,7 +93,6 @@ We welcome several types of contributions:
    ```
 
 2. **Make your changes**
-
    - Follow the existing code style
    - Add tests for new functionality
    - Update documentation as needed
@@ -107,7 +106,6 @@ We welcome several types of contributions:
    ```
 
    Follow [Conventional Commits](https://conventionalcommits.org/) format:
-
    - `feat:` New features
    - `fix:` Bug fixes
    - `docs:` Documentation changes

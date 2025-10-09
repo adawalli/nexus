@@ -21,81 +21,63 @@ _Intelligent AI model search and discovery with zero-install simplicity_
 
 ---
 
-## 🚀 What is Nexus?
+## What is Nexus?
 
-Nexus is a production-ready **Model Context Protocol (MCP) server** that brings AI-powered web search directly into your development environment. Get intelligent search results with proper citations in **Claude Desktop**, **Cursor**, or any MCP-compatible client - all with a single command.
+Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered web search functionality through the OpenRouter API. It integrates with MCP-compatible clients including Claude Desktop and Cursor, providing search capabilities via the Perplexity Sonar model family.
 
-### Why Nexus?
+### Key Characteristics
 
-- **🎯 Zero Setup**: Ready in 30 seconds with `npx` - no installation, no configuration
-- **🧠 AI-Powered**: Uses Perplexity Sonar models for intelligent, current web search
-- **📚 Source Citations**: Get authoritative sources with every search result
-- **🔧 Developer-First**: Built for developers who want AI capabilities without complexity
-- **⚡ Production-Ready**: Enterprise-grade reliability with comprehensive error handling
+- **Zero-install deployment**: Executable via `npx` with no build requirements
+- **OpenRouter integration**: Uses Perplexity Sonar models for web search with citations
+- **MCP protocol compliance**: Implements standard MCP tool and resource interfaces
+- **Production architecture**: Includes request caching, deduplication, retry logic, and error handling
+- **Type-safe implementation**: Full TypeScript coverage with strict type checking
 
-## ✨ Features
+## Features
 
-<table>
-<tr>
-<td width="50%">
+### Deployment
 
-### 🚀 **Zero-Install Simplicity**
+- NPX-based execution with zero local installation
+- Cross-platform compatibility (macOS, Linux, Windows)
+- Node.js 16+ runtime requirement
+- Automated version updates via npm registry
 
-- Ready in 30 seconds with `npx`
-- No dependencies or build steps
-- Cross-platform compatibility
-- Always up-to-date
+### Search Capabilities
 
-### 🧠 **AI-Powered Intelligence**
+- Perplexity Sonar model family integration
+- Real-time web search with current information
+- Structured citation extraction from responses
+- Configurable model parameters (temperature, max tokens, penalties)
 
-- Perplexity Sonar model integration
-- Real-time web content search
-- Context-aware result ranking
-- Multiple model options
+### Architecture
 
-</td>
-<td width="50%">
+- Comprehensive error handling with typed error classes
+- Request caching with configurable TTL
+- Request deduplication for concurrent identical queries
+- Automatic retry logic with exponential backoff
+- Winston-based structured logging
+- TypeScript strict mode implementation with full type coverage
 
-### 📚 **Professional Quality**
-
-- Source citations and metadata
-- Comprehensive error handling
-- Production-grade reliability
-- TypeScript implementation
-
-### 🔧 **Developer Experience**
-
-- MCP protocol compliance
-- Extensive documentation
-- Configurable parameters
-- Community support
-
-</td>
-</tr>
-</table>
-
-## 🏃‍♂️ Quick Start
-
-**🚀 Zero-install setup - Ready in 30 seconds!**
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 16 or higher
-- An OpenRouter API key (get one at [OpenRouter](https://openrouter.ai))
+- OpenRouter API key ([register at openrouter.ai](https://openrouter.ai))
 
-### Zero-Config Installation
+### NPX Installation
 
-No build steps, no dependencies, no setup required:
+Execute the server without local installation:
 
 ```bash
 # Set your OpenRouter API key
 export OPENROUTER_API_KEY=your-api-key-here
 
-# Run the server instantly
+# Run the server via NPX
 npx nexus-mcp
 ```
 
-That's it! The server is now running and ready for MCP client connections.
+The server starts and listens for MCP client connections via STDIO transport.
 
 ### Testing the NPX Installation
 
@@ -151,17 +133,13 @@ npm start
 
 ## Integration with MCP Clients
 
-### 🚀 Quick Setup with NPX (Recommended)
+### NPX-Based Integration (Recommended)
 
-The easiest way to integrate with any MCP client is using NPX:
+Configure MCP clients to execute the server via NPX:
 
 ### Claude Code
 
-Add this server to your Claude Code MCP settings:
-
-1. Open your MCP settings file (usually `~/.claude/mcp_settings.json`)
-
-2. Add the server configuration using NPX:
+Configuration in `~/.claude/mcp_settings.json`:
 
 ```json
 {
@@ -177,34 +155,27 @@ Add this server to your Claude Code MCP settings:
 }
 ```
 
-3. Restart Claude Code
-
-**That's it!** No installation, no build steps, no path configuration required.
+Restart Claude Code after configuration changes.
 
 ### Cursor
 
-Configure the server in Cursor's MCP settings:
+Add server configuration in Cursor's MCP settings:
 
-1. Open Cursor settings and navigate to MCP servers
+- **Name**: `nexus`
+- **Command**: `npx`
+- **Args**: `["nexus-mcp"]`
+- **Environment Variables**: `OPENROUTER_API_KEY=your-api-key-here`
 
-2. Add a new server with:
+Restart Cursor after configuration changes.
 
-   - **Name**: `nexus`
-   - **Command**: `npx`
-   - **Args**: `["nexus-mcp"]`
-   - **Environment Variables**:
-     - `OPENROUTER_API_KEY`: `your-api-key-here`
+### Generic MCP Client Configuration
 
-3. Restart Cursor
-
-### Other MCP Clients
-
-For any MCP-compatible client, use these connection details:
+Standard MCP client connection parameters:
 
 - **Transport**: stdio
 - **Command**: `npx`
 - **Args**: `["nexus-mcp"]`
-- **Environment Variables**: `OPENROUTER_API_KEY=your-api-key-here`
+- **Environment**: `OPENROUTER_API_KEY=your-api-key-here`
 
 ### Alternative: Local Installation
 
@@ -393,14 +364,14 @@ npm run lint
 npm run format
 ```
 
-## 💰 API Credits and Costs
+## API Costs
 
-This server uses OpenRouter's API, which charges based on token usage:
+OpenRouter charges for API usage based on token consumption:
 
-- **Perplexity Sonar models**: Check current pricing at [OpenRouter Models](https://openrouter.ai/models)
-- **Usage monitoring**: Track consumption through the OpenRouter dashboard
-- **Cost control**: Set usage limits in your OpenRouter account
-- **Optimization**: Nexus includes built-in rate limiting and intelligent caching
+- **Pricing**: See current rates at [OpenRouter Models](https://openrouter.ai/models)
+- **Monitoring**: Usage tracking available in OpenRouter dashboard
+- **Limits**: Configure spending limits in OpenRouter account settings
+- **Optimization**: Server implements response caching and request deduplication to minimize redundant API calls
 
 ## 📚 Documentation
 
