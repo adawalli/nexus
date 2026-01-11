@@ -1,11 +1,38 @@
 import { z } from 'zod';
 
-import type { PerplexityModelId } from '../types/openrouter.js';
+import {
+  PERPLEXITY_MODELS,
+  MIN_TIMEOUT_MS,
+  MAX_TIMEOUT_MS,
+  type UserFriendlyModelName,
+} from '../constants/models.js';
 
 /**
- * Supported Perplexity models for search operations
+ * Valid model names derived from the constants
  */
-export const SUPPORTED_MODELS: PerplexityModelId[] = ['perplexity/sonar'];
+const VALID_MODELS = Object.keys(PERPLEXITY_MODELS) as [
+  UserFriendlyModelName,
+  ...UserFriendlyModelName[],
+];
+
+/**
+ * Supported Perplexity models for search operations (user-friendly names)
+ * Exported for backward compatibility with tests
+ */
+export const SUPPORTED_MODELS: UserFriendlyModelName[] = [...VALID_MODELS];
+
+/**
+ * Model schema with custom error messages
+ */
+const modelSchema = z
+  .enum(VALID_MODELS, {
+    error: ((val: { input: unknown }) =>
+      `Invalid model '${val.input}'. Valid options: ${VALID_MODELS.join(', ')}`) as unknown as string,
+  })
+  .default('sonar')
+  .describe(
+    'Perplexity model to use for search. Options: sonar (fast Q&A, default), sonar-pro (multi-step queries), sonar-reasoning-pro (chain-of-thought reasoning), sonar-deep-research (exhaustive research reports)'
+  );
 
 /**
  * Zod schema for search tool input validation
@@ -23,10 +50,26 @@ export const SearchToolInputSchema = z.object({
   /**
    * Model selection (optional, defaults to sonar model)
    */
-  model: z
-    .enum(['perplexity/sonar'] as const)
-    .default('perplexity/sonar')
-    .describe('Perplexity model to use for search'),
+  model: modelSchema,
+
+  /**
+   * Timeout override in milliseconds (optional)
+   */
+  timeout: z
+    .number()
+    .int()
+    .min(
+      MIN_TIMEOUT_MS,
+      `Timeout must be at least ${MIN_TIMEOUT_MS}ms (5 seconds)`
+    )
+    .max(
+      MAX_TIMEOUT_MS,
+      `Timeout cannot exceed ${MAX_TIMEOUT_MS}ms (10 minutes)`
+    )
+    .optional()
+    .describe(
+      `Optional timeout override in milliseconds. Overrides the model's default timeout. Min: ${MIN_TIMEOUT_MS}ms, Max: ${MAX_TIMEOUT_MS}ms`
+    ),
 
   /**
    * Maximum tokens for response (optional, with reasonable bounds)

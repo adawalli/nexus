@@ -9,10 +9,20 @@ import {
 } from '../clients/openrouter.js';
 import { ConfigurationManager } from '../config/manager.js';
 import {
+  PERPLEXITY_MODELS,
+  MODEL_TIMEOUTS,
+  MODEL_COST_TIERS,
+  type UserFriendlyModelName,
+  type CostTier,
+} from '../constants/models.js';
+import {
   validateSearchInput,
   type SearchToolInput,
 } from '../schemas/search.js';
-import type { ChatCompletionRequest } from '../types/openrouter.js';
+import type {
+  ChatCompletionRequest,
+  PerplexityModelId,
+} from '../types/openrouter.js';
 import {
   formatSearchResponseWithMetrics,
   createErrorResponse,
@@ -44,6 +54,98 @@ const logger = winston.createLogger({
 });
 
 /**
+ * Resolve user-friendly model name to OpenRouter model identifier
+ */
+function resolveModelIdentifier(
+  modelName: UserFriendlyModelName
+): PerplexityModelId {
+  return PERPLEXITY_MODELS[modelName];
+}
+
+/**
+ * Get the effective timeout for a model, considering override
+ */
+function getEffectiveTimeout(
+  modelName: UserFriendlyModelName,
+  timeoutOverride?: number
+): number {
+  if (timeoutOverride !== undefined) {
+    return timeoutOverride;
+  }
+  return MODEL_TIMEOUTS[modelName];
+}
+
+/**
+ * Get the cost tier for a model
+ */
+function getCostTier(modelName: UserFriendlyModelName): CostTier {
+  return MODEL_COST_TIERS[modelName];
+}
+
+/**
+ * Convert an error to a SearchResponse with appropriate error type
+ */
+function createErrorResponseFromError(error: unknown): SearchResponse {
+  if (error instanceof AuthenticationError) {
+    return createErrorResponse(
+      'Authentication failed: Invalid API key',
+      'auth'
+    );
+  }
+
+  if (error instanceof RateLimitError) {
+    const retryMessage = error.retryAfter
+      ? ` (retry after ${error.retryAfter}s)`
+      : '';
+    return createErrorResponse(
+      `Rate limit exceeded${retryMessage}`,
+      'rate_limit'
+    );
+  }
+
+  if (error instanceof ServerError) {
+    return createErrorResponse(
+      'OpenRouter service temporarily unavailable',
+      'api'
+    );
+  }
+
+  if (error instanceof OpenRouterApiError) {
+    return createErrorResponse(`API error: ${error.message}`, 'api');
+  }
+
+  if (error instanceof Error) {
+    if (
+      error.message.includes('timeout') ||
+      error.message.includes('timed out')
+    ) {
+      return createErrorResponse(
+        'Request timed out - please try again',
+        'timeout'
+      );
+    }
+
+    if (error.message.includes('Network error')) {
+      return createErrorResponse(
+        'Network error - please check your connection',
+        'network'
+      );
+    }
+
+    if (error.message.includes('Too many concurrent requests')) {
+      return createErrorResponse(
+        'Too many concurrent requests - please try again later',
+        'rate_limit'
+      );
+    }
+
+    return createErrorResponse(error.message, 'unknown');
+  }
+
+  return createErrorResponse('Unknown error occurred', 'unknown');
+}
+
+/**
  * Core search tool implementation
  * Orchestrates input validation, API calls, and response formatting
  */
@@ -52,6 +154,7 @@ export class SearchTool {
   private cache: TTLCache<SearchResponse>;
   private deduplicator: RequestDeduplicator<SearchResponse>;
   private config: ConfigurationManager;
+  private apiKey: string;
   private performanceMetrics: Array<{
     totalTime: number;
     sourceCount: number;
@@ -64,6 +167,7 @@ export class SearchTool {
   }> = [];
 
   constructor(apiKey: string) {
+    this.apiKey = apiKey;
     this.config = ConfigurationManager.getInstance();
 
     this.client = new OpenRouterClient({
@@ -105,6 +209,7 @@ export class SearchTool {
         model: validatedInput.model,
         maxTokens: validatedInput.maxTokens,
         temperature: validatedInput.temperature,
+        timeout: validatedInput.timeout,
       });
     } catch (error) {
       logger.warn('Input validation failed', { error });
@@ -123,10 +228,26 @@ export class SearchTool {
       return createErrorResponse(parsedError.message, 'validation');
     }
 
-    // Step 2: Generate keys for cache and deduplication
+    // Step 2: Resolve model name to OpenRouter identifier and determine timeout/cost tier
+    const userFriendlyModel = validatedInput.model as UserFriendlyModelName;
+    const openRouterModelId = resolveModelIdentifier(userFriendlyModel);
+    const effectiveTimeout = getEffectiveTimeout(
+      userFriendlyModel,
+      validatedInput.timeout
+    );
+    const costTier = getCostTier(userFriendlyModel);
+
+    logger.debug('Model resolution complete', {
+      userFriendlyModel,
+      openRouterModelId,
+      effectiveTimeout,
+      costTier,
+    });
+
+    // Step 3: Generate keys for cache and deduplication
     const requestParams = {
       query: validatedInput.query,
-      model: validatedInput.model,
+      model: openRouterModelId,
       temperature: validatedInput.temperature,
       maxTokens: validatedInput.maxTokens,
       topP: validatedInput.topP,
@@ -138,13 +259,13 @@ export class SearchTool {
     const cacheKey = createCacheKey(requestParams);
     const requestKey = createRequestKey(requestParams);
 
-    // Step 3: Check cache first if enabled
+    // Step 4: Check cache first if enabled
     if (this.config.isCacheEnabled()) {
       const cachedResponse = this.cache.get(cacheKey);
       if (cachedResponse) {
         logger.info('Cache hit for search request', {
           query: validatedInput.query,
-          model: validatedInput.model,
+          model: openRouterModelId,
           cacheKey,
         });
         return cachedResponse;
@@ -152,14 +273,21 @@ export class SearchTool {
       logger.debug('Cache miss for search request', { cacheKey });
     }
 
-    // Step 4: Use deduplication to handle concurrent identical requests
+    // Step 5: Use deduplication to handle concurrent identical requests
     try {
       const result = await this.deduplicator.execute(
         requestKey,
         async () => {
-          return this.performActualSearch(validatedInput, cacheKey, startTime);
+          return this.performActualSearch(
+            validatedInput,
+            openRouterModelId,
+            effectiveTimeout,
+            costTier,
+            cacheKey,
+            startTime
+          );
         },
-        this.config.getTimeoutMs()
+        effectiveTimeout
       );
 
       // Log deduplication info if this was a deduplicated request
@@ -180,72 +308,7 @@ export class SearchTool {
         query: validatedInput.query,
       });
 
-      // Handle OpenRouter API errors specifically
-      if (error instanceof AuthenticationError) {
-        return createErrorResponse(
-          'Authentication failed: Invalid API key',
-          'auth'
-        );
-      }
-
-      if (error instanceof RateLimitError) {
-        return createErrorResponse(
-          `Rate limit exceeded${error.retryAfter ? ` (retry after ${error.retryAfter}s)` : ''}`,
-          'rate_limit'
-        );
-      }
-
-      if (error instanceof ServerError) {
-        return createErrorResponse(
-          'OpenRouter service temporarily unavailable',
-          'api'
-        );
-      }
-
-      if (error instanceof OpenRouterApiError) {
-        return createErrorResponse(`API error: ${error.message}`, 'api');
-      }
-
-      // Handle deduplication-specific errors
-      if (error instanceof Error && error.message.includes('timed out')) {
-        return createErrorResponse(
-          'Request timed out - please try again',
-          'timeout'
-        );
-      }
-
-      if (
-        error instanceof Error &&
-        error.message.includes('Too many concurrent requests')
-      ) {
-        return createErrorResponse(
-          'Too many concurrent requests - please try again later',
-          'rate_limit'
-        );
-      }
-
-      // Handle timeout and network errors
-      if (error instanceof Error) {
-        if (error.message.includes('timeout')) {
-          return createErrorResponse(
-            'Request timed out - please try again',
-            'timeout'
-          );
-        }
-
-        if (error.message.includes('Network error')) {
-          return createErrorResponse(
-            'Network error - please check your connection',
-            'network'
-          );
-        }
-      }
-
-      // Generic error fallback
-      return createErrorResponse(
-        error instanceof Error ? error.message : 'Unknown error occurred',
-        'unknown'
-      );
+      return createErrorResponseFromError(error);
     }
   }
 
@@ -254,13 +317,24 @@ export class SearchTool {
    */
   private async performActualSearch(
     validatedInput: SearchToolInput,
+    openRouterModelId: PerplexityModelId,
+    effectiveTimeout: number,
+    costTier: CostTier,
     cacheKey: string,
     startTime: number
   ): Promise<SearchResponse> {
     try {
-      // Prepare chat completion request
+      // Create a new client with model-specific timeout
+      const modelClient = new OpenRouterClient({
+        apiKey: this.apiKey,
+        userAgent: 'nexus-mcp/1.0.0',
+        timeout: effectiveTimeout,
+        maxRetries: 3,
+      });
+
+      // Prepare chat completion request with resolved model identifier
       const chatRequest: ChatCompletionRequest = {
-        model: validatedInput.model,
+        model: openRouterModelId,
         messages: [
           {
             role: 'user',
@@ -277,7 +351,7 @@ export class SearchTool {
       };
 
       logger.info('Sending search request to OpenRouter', {
-        model: validatedInput.model,
+        model: openRouterModelId,
         query: validatedInput.query,
         temperature: validatedInput.temperature,
         maxTokens: validatedInput.maxTokens,
@@ -285,10 +359,12 @@ export class SearchTool {
         frequencyPenalty: validatedInput.frequencyPenalty,
         presencePenalty: validatedInput.presencePenalty,
         stop: validatedInput.stop,
+        timeout: effectiveTimeout,
+        costTier,
       });
 
-      // Call OpenRouter API
-      const apiResponse = await this.client.chatCompletions(chatRequest);
+      // Call OpenRouter API with model-specific client
+      const apiResponse = await modelClient.chatCompletions(chatRequest);
 
       logger.info('Search request completed successfully', {
         requestId: apiResponse.id,
@@ -303,7 +379,11 @@ export class SearchTool {
         validatedInput.query,
         startTime,
         validatedInput.temperature,
-        validatedInput.maxTokens
+        validatedInput.maxTokens,
+        {
+          timeout: effectiveTimeout,
+          costTier,
+        }
       );
 
       const searchResponse = formattingResult.response;
@@ -338,54 +418,7 @@ export class SearchTool {
         query: validatedInput.query,
       });
 
-      // Handle different error types
-      if (error instanceof AuthenticationError) {
-        return createErrorResponse(
-          'Authentication failed: Invalid API key',
-          'auth'
-        );
-      }
-
-      if (error instanceof RateLimitError) {
-        return createErrorResponse(
-          `Rate limit exceeded${error.retryAfter ? ` (retry after ${error.retryAfter}s)` : ''}`,
-          'rate_limit'
-        );
-      }
-
-      if (error instanceof ServerError) {
-        return createErrorResponse(
-          'OpenRouter service temporarily unavailable',
-          'api'
-        );
-      }
-
-      if (error instanceof OpenRouterApiError) {
-        return createErrorResponse(`API error: ${error.message}`, 'api');
-      }
-
-      // Handle timeout and network errors
-      if (error instanceof Error) {
-        if (error.message.includes('timeout')) {
-          return createErrorResponse(
-            'Request timed out - please try again',
-            'timeout'
-          );
-        }
-
-        if (error.message.includes('Network error')) {
-          return createErrorResponse(
-            'Network error - please check your connection',
-            'network'
-          );
-        }
-      }
-
-      // Generic error fallback
-      return createErrorResponse(
-        error instanceof Error ? error.message : 'Unknown error occurred',
-        'unknown'
-      );
+      return createErrorResponseFromError(error);
     }
   }
 

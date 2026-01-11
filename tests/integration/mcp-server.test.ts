@@ -42,9 +42,15 @@ describe('MCP Server JSON-RPC Response Validation', () => {
                 },
                 model: {
                   type: 'string',
-                  description: 'Perplexity model to use for search',
-                  enum: ['perplexity/sonar'],
-                  default: 'perplexity/sonar',
+                  description:
+                    'Perplexity model to use for search. Options: sonar (fast Q&A, 30s timeout), sonar-pro (multi-step queries, 60s timeout), sonar-reasoning-pro (chain-of-thought reasoning, 120s timeout), sonar-deep-research (exhaustive research reports, 300s timeout). Premium models (sonar-pro and above) have higher API costs.',
+                  enum: [
+                    'sonar',
+                    'sonar-pro',
+                    'sonar-reasoning-pro',
+                    'sonar-deep-research',
+                  ],
+                  default: 'sonar',
                 },
                 maxTokens: {
                   type: 'number',

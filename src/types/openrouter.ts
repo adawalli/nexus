@@ -12,7 +12,11 @@ export type FinishReason =
   | 'tool_calls'
   | null;
 
-export type PerplexityModelId = 'perplexity/sonar';
+export type PerplexityModelId =
+  | 'perplexity/sonar'
+  | 'perplexity/sonar-pro'
+  | 'perplexity/sonar-reasoning-pro'
+  | 'perplexity/sonar-deep-research';
 
 export interface ChatMessage {
   role: ChatRole;

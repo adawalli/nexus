@@ -158,7 +158,7 @@ describe('SearchTool', () => {
 
       const input = {
         query: 'test query',
-        model: 'perplexity/sonar' as const,
+        model: 'sonar' as const, // Use user-friendly model name
         maxTokens: 1000,
         temperature: 0.3,
       };

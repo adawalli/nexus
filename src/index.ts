@@ -140,7 +140,7 @@ server.setRequestHandler(
         tools.push({
           name: 'search',
           description:
-            'Nexus AI-powered search using Perplexity models via OpenRouter. Searches the web for current information and provides comprehensive answers with sources.',
+            'Nexus AI-powered search using Perplexity models via OpenRouter. Searches the web for current information and provides comprehensive answers with sources. Supports multiple model tiers: sonar (fast Q&A), sonar-pro (multi-step queries), sonar-reasoning-pro (chain-of-thought reasoning), and sonar-deep-research (exhaustive research reports).',
           inputSchema: {
             type: 'object',
             properties: {
@@ -153,9 +153,15 @@ server.setRequestHandler(
               },
               model: {
                 type: 'string',
-                description: 'Perplexity model to use for search',
-                enum: ['perplexity/sonar'],
-                default: 'perplexity/sonar',
+                description:
+                  'Perplexity model to use for search. Options: sonar (fast Q&A, 30s timeout), sonar-pro (multi-step queries, 60s timeout), sonar-reasoning-pro (chain-of-thought reasoning, 120s timeout), sonar-deep-research (exhaustive research reports, 300s timeout). Premium models (sonar-pro and above) have higher API costs.',
+                enum: [
+                  'sonar',
+                  'sonar-pro',
+                  'sonar-reasoning-pro',
+                  'sonar-deep-research',
+                ],
+                default: 'sonar',
               },
               maxTokens: {
                 type: 'number',
@@ -171,6 +177,13 @@ server.setRequestHandler(
                 minimum: 0,
                 maximum: 2,
                 default: 0.3,
+              },
+              timeout: {
+                type: 'number',
+                description:
+                  'Override the model-specific default timeout in milliseconds (5000-600000). Use this to extend or reduce the wait time for API responses.',
+                minimum: 5000,
+                maximum: 600000,
               },
             },
             required: ['query'],
@@ -263,27 +276,44 @@ server.setRequestHandler(
 
             const result = searchResponse.result!;
 
+            // Build metadata lines
+            const metadataLines = [
+              `- Model: ${result.metadata.model}`,
+              `- Response time: ${result.metadata.responseTime}ms`,
+              `- Tokens used: ${result.metadata.usage?.total_tokens || 'N/A'}`,
+            ];
+
+            // Include timeout in metadata
+            if (result.metadata.timeout !== undefined) {
+              metadataLines.push(`- Timeout: ${result.metadata.timeout}ms`);
+            }
+
+            // Include sources count if any
+            if (result.sources.length > 0) {
+              metadataLines.push(`- Sources: ${result.sources.length} found`);
+            }
+
+            // Include cost tier warning for premium models
+            if (result.metadata.costTier === 'premium') {
+              metadataLines.push(`- Cost tier: premium (higher API costs)`);
+            }
+
             // Format response with metadata
             const responseText = [
               result.content,
               '',
               '---',
               `**Search Metadata:**`,
-              `- Model: ${result.metadata.model}`,
-              `- Response time: ${result.metadata.responseTime}ms`,
-              `- Tokens used: ${result.metadata.usage?.total_tokens || 'N/A'}`,
-              result.sources.length > 0
-                ? `- Sources: ${result.sources.length} found`
-                : '',
-            ]
-              .filter(Boolean)
-              .join('\n');
+              ...metadataLines,
+            ].join('\n');
 
             logger.info('Search completed successfully', {
               requestId: searchResponse.requestId,
               tokensUsed: result.metadata.usage?.total_tokens,
               sourcesFound: result.sources.length,
               responseTime: result.metadata.responseTime,
+              timeout: result.metadata.timeout,
+              costTier: result.metadata.costTier,
             });
 
             return {
