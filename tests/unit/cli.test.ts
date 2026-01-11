@@ -37,7 +37,7 @@ describe('CLI Module', () => {
 
     console.log = consoleLogMock;
     console.error = consoleErrorMock;
-    process.exit = processExitMock as typeof process.exit;
+    process.exit = processExitMock as unknown as typeof process.exit;
     process.argv = ['node', 'cli.js'];
 
     delete process.env.OPENROUTER_API_KEY;
