@@ -135,9 +135,8 @@ describe('MCP Server Index', () => {
   describe('createServer', () => {
     it('should create and start the server', async () => {
       const { createServer } = await import('../../../src/index.js');
-      const { Server } = await import(
-        '@modelcontextprotocol/sdk/server/index.js'
-      );
+      const { Server } =
+        await import('@modelcontextprotocol/sdk/server/index.js');
 
       const result = await createServer();
 
@@ -147,9 +146,8 @@ describe('MCP Server Index', () => {
 
     it('should initialize configuration', async () => {
       const { createServer } = await import('../../../src/index.js');
-      const { ConfigurationManager } = await import(
-        '../../../src/config/index.js'
-      );
+      const { ConfigurationManager } =
+        await import('../../../src/config/index.js');
 
       await createServer();
 

@@ -95,9 +95,8 @@ describe('SearchTool', () => {
 
     process.env.OPENROUTER_API_KEY = mockApiKey;
 
-    const { ConfigurationManager } = await import(
-      '../../../src/config/manager'
-    );
+    const { ConfigurationManager } =
+      await import('../../../src/config/manager');
     ConfigurationManager['instance'] = null;
 
     searchTool = new SearchTool(mockApiKey);
