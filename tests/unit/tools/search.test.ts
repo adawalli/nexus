@@ -59,7 +59,6 @@ vi.mock('../../../src/clients/openrouter', () => {
   };
 });
 
-// Mock winston to avoid console output during tests
 vi.mock('winston', () => ({
   default: {
     createLogger: () => ({
@@ -94,10 +93,8 @@ describe('SearchTool', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Set environment variable for configuration
     process.env.OPENROUTER_API_KEY = mockApiKey;
 
-    // Reset ConfigurationManager singleton
     const { ConfigurationManager } = await import(
       '../../../src/config/manager'
     );
@@ -105,7 +102,6 @@ describe('SearchTool', () => {
 
     searchTool = new SearchTool(mockApiKey);
 
-    // Get the mock client instance
     const openRouterModule = await import('../../../src/clients/openrouter');
     const MockClient =
       openRouterModule.OpenRouterClient as unknown as MockedClass<
@@ -250,6 +246,25 @@ describe('SearchTool', () => {
       expect(result.error).toBe('OpenRouter service temporarily unavailable');
     });
 
+    it('should handle generic OpenRouterApiError', async () => {
+      const openRouterModule = await import('../../../src/clients/openrouter');
+      mockClient.chatCompletions.mockRejectedValue(
+        new openRouterModule.OpenRouterApiError(
+          'Bad request',
+          400,
+          'invalid_request',
+          400
+        )
+      );
+
+      const input = { query: 'test query' };
+      const result = await searchTool.search(input);
+
+      expect(result.success).toBe(false);
+      expect(result.errorType).toBe('api');
+      expect(result.error).toBe('API error: Bad request');
+    });
+
     it('should handle timeout errors', async () => {
       mockClient.chatCompletions.mockRejectedValue(
         new Error('Request timeout after 30000ms')
@@ -391,16 +406,13 @@ describe('SearchTool', () => {
     it('should return deduplication statistics', () => {
       const stats = searchTool.getDeduplicationStats();
 
-      expect(stats).toHaveProperty('pendingRequests');
-      expect(stats).toHaveProperty('deduplicatedRequests');
-      expect(stats).toHaveProperty('uniqueRequests');
-      expect(stats).toHaveProperty('maxConcurrentRequests');
-      expect(stats).toHaveProperty('deduplicationRatio');
-      expect(typeof stats.pendingRequests).toBe('number');
-      expect(typeof stats.deduplicatedRequests).toBe('number');
-      expect(typeof stats.uniqueRequests).toBe('number');
-      expect(typeof stats.maxConcurrentRequests).toBe('number');
-      expect(typeof stats.deduplicationRatio).toBe('number');
+      expect(stats).toMatchObject({
+        pendingRequests: expect.any(Number),
+        deduplicatedRequests: expect.any(Number),
+        uniqueRequests: expect.any(Number),
+        maxConcurrentRequests: expect.any(Number),
+        deduplicationRatio: expect.any(Number),
+      });
     });
   });
 
@@ -408,16 +420,13 @@ describe('SearchTool', () => {
     it('should return cache statistics', () => {
       const stats = searchTool.getCacheStats();
 
-      expect(stats).toHaveProperty('hits');
-      expect(stats).toHaveProperty('misses');
-      expect(stats).toHaveProperty('size');
-      expect(stats).toHaveProperty('maxSize');
-      expect(stats).toHaveProperty('hitRatio');
-      expect(typeof stats.hits).toBe('number');
-      expect(typeof stats.misses).toBe('number');
-      expect(typeof stats.size).toBe('number');
-      expect(typeof stats.maxSize).toBe('number');
-      expect(typeof stats.hitRatio).toBe('number');
+      expect(stats).toMatchObject({
+        hits: expect.any(Number),
+        misses: expect.any(Number),
+        size: expect.any(Number),
+        maxSize: expect.any(Number),
+        hitRatio: expect.any(Number),
+      });
     });
   });
 
@@ -447,18 +456,15 @@ describe('SearchTool', () => {
     it('should return performance metrics', () => {
       const metrics = searchTool.getPerformanceMetrics();
 
-      expect(metrics).toHaveProperty('averageProcessingTime');
-      expect(metrics).toHaveProperty('averageSourceCount');
-      expect(metrics).toHaveProperty('averageContentLength');
-      expect(metrics).toHaveProperty('averageMemoryUsage');
-      expect(metrics).toHaveProperty('totalRequests');
+      expect(metrics).toMatchObject({
+        averageProcessingTime: expect.any(Number),
+        averageSourceCount: expect.any(Number),
+        averageContentLength: expect.any(Number),
+        averageMemoryUsage: expect.any(Number),
+        totalRequests: expect.any(Number),
+      });
       expect(metrics).toHaveProperty('slowestRequest');
       expect(metrics).toHaveProperty('fastestRequest');
-      expect(typeof metrics.averageProcessingTime).toBe('number');
-      expect(typeof metrics.averageSourceCount).toBe('number');
-      expect(typeof metrics.averageContentLength).toBe('number');
-      expect(typeof metrics.averageMemoryUsage).toBe('number');
-      expect(typeof metrics.totalRequests).toBe('number');
     });
 
     it('should track metrics after search operations', async () => {
