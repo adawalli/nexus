@@ -447,7 +447,7 @@ describe('createChildLogger', () => {
   it('should accept sanitize options', () => {
     const childLogger = createChildLogger(
       { service: 'test-service' },
-      { sensitiveFields: ['password'] }
+      { additionalSensitiveFields: ['password'] }
     );
 
     expect(childLogger).toBeInstanceOf(EnhancedSecureLogger);
