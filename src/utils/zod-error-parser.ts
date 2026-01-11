@@ -1,19 +1,27 @@
-import { ZodError, ZodIssue } from 'zod';
+import { ZodError, type ZodIssue } from 'zod';
 
 import { SUPPORTED_MODELS } from '../schemas/search.js';
+
+interface ZodIssueDetails {
+  field: string;
+  issue: string;
+  received?: unknown;
+  expected?: string | string[];
+  suggestion?: string;
+}
+
+// Zod v3 and v4 use different property names for the same concepts.
+// This helper safely accesses properties that may exist in either version.
+function getIssueProperty<T>(issue: ZodIssue, prop: string): T | undefined {
+  return (issue as unknown as Record<string, unknown>)[prop] as T | undefined;
+}
 
 /**
  * Parse a Zod error and convert to user-friendly message
  */
 export function parseZodError(error: ZodError): {
   message: string;
-  details: Array<{
-    field: string;
-    issue: string;
-    received?: unknown;
-    expected?: string | string[];
-    suggestion?: string;
-  }>;
+  details: ZodIssueDetails[];
 } {
   const details = error.issues.map(issue => parseZodIssue(issue));
 
@@ -36,72 +44,84 @@ export function parseZodError(error: ZodError): {
 
 /**
  * Parse individual Zod issue into user-friendly details
+ * Compatible with both Zod v3 and v4 issue structures
  */
-function parseZodIssue(issue: ZodIssue): {
-  field: string;
-  issue: string;
-  received?: unknown;
-  expected?: string | string[];
-  suggestion?: string;
-} {
+function parseZodIssue(issue: ZodIssue): ZodIssueDetails {
   const field = issue.path.join('.');
+  const code = issue.code;
 
-  switch (issue.code) {
-    case 'invalid_type':
-      return {
-        field,
-        issue: `Invalid type for ${field}`,
-        received: issue.received,
-        expected: issue.expected,
-        suggestion: `Parameter '${field}' must be of type ${issue.expected}, but received ${issue.received}`,
-      };
-
-    case 'invalid_enum_value':
-      return handleInvalidEnum(field, issue);
-
-    case 'too_small':
-      return handleTooSmall(field, issue);
-
-    case 'too_big':
-      return handleTooBig(field, issue);
-
-    case 'invalid_string':
-      return {
-        field,
-        issue: `Invalid string format for ${field}`,
-        suggestion: `Parameter '${field}' has invalid string format: ${issue.validation}`,
-      };
-
-    case 'custom':
-      return {
-        field,
-        issue: issue.message || `Custom validation failed for ${field}`,
-        suggestion: issue.message,
-      };
-
-    default:
-      return {
-        field,
-        issue: issue.message || `Validation failed for ${field}`,
-        suggestion: issue.message,
-      };
+  // Handle invalid_type (Zod v3/v4)
+  if (code === 'invalid_type') {
+    const received = getIssueProperty<string>(issue, 'received');
+    const expected = getIssueProperty<string>(issue, 'expected');
+    return {
+      field,
+      issue: `Invalid type for ${field}`,
+      received,
+      expected,
+      suggestion: `Parameter '${field}' must be of type ${expected ?? 'expected type'}, but received ${received ?? 'unknown'}`,
+    };
   }
+
+  // Handle invalid_value (Zod v4) or invalid_enum_value (Zod v3)
+  // Type assertion needed because TypeScript only knows about v4 codes
+  if (code === 'invalid_value' || (code as string) === 'invalid_enum_value') {
+    return handleInvalidValue(field, issue);
+  }
+
+  // Handle too_small
+  if (code === 'too_small') {
+    return handleTooSmall(field, issue);
+  }
+
+  // Handle too_big
+  if (code === 'too_big') {
+    return handleTooBig(field, issue);
+  }
+
+  // Handle invalid_format (Zod v4) or invalid_string (Zod v3)
+  // Type assertion needed because TypeScript only knows about v4 codes
+  if (code === 'invalid_format' || (code as string) === 'invalid_string') {
+    const formatType =
+      getIssueProperty<string>(issue, 'format') ??
+      getIssueProperty<string>(issue, 'validation') ??
+      'unknown';
+    return {
+      field,
+      issue: `Invalid string format for ${field}`,
+      suggestion: `Parameter '${field}' has invalid format: ${formatType}`,
+    };
+  }
+
+  // Handle custom errors
+  if (code === 'custom') {
+    return {
+      field,
+      issue: issue.message || `Custom validation failed for ${field}`,
+      suggestion: issue.message,
+    };
+  }
+
+  // Default fallback for any other codes
+  return {
+    field,
+    issue: issue.message || `Validation failed for ${field}`,
+    suggestion: issue.message,
+  };
 }
 
 /**
- * Handle invalid enum value with model-specific suggestions
+ * Handle invalid enum/value errors with model-specific suggestions
+ * Compatible with both Zod v3 (invalid_enum_value) and v4 (invalid_value)
  */
-function handleInvalidEnum(
-  field: string,
-  issue: ZodIssue & { code: 'invalid_enum_value' }
-): {
-  field: string;
-  issue: string;
-  received?: unknown;
-  expected?: string | string[];
-  suggestion?: string;
-} {
-  const { received, options } = issue;
+function handleInvalidValue(field: string, issue: ZodIssue): ZodIssueDetails {
+  // Get received value (Zod v3 and v4 compatible)
+  const received = getIssueProperty<unknown>(issue, 'received');
+  // Get options (Zod v3: options, Zod v4: values)
+  const options =
+    getIssueProperty<unknown[]>(issue, 'options') ??
+    getIssueProperty<unknown[]>(issue, 'values') ??
+    [];
 
   // Special handling for model field
   if (field === 'model') {
@@ -118,29 +138,35 @@ function handleInvalidEnum(
   }
 
   // Generic enum handling
+  const optionStrings = options.map(String);
   return {
     field,
     issue: `Invalid value for ${field}`,
     received,
-    expected: options.map(String),
-    suggestion: `Parameter '${field}' must be one of: ${options.join(', ')}. Received: ${received}`,
+    expected: optionStrings,
+    suggestion:
+      optionStrings.length > 0
+        ? `Parameter '${field}' must be one of: ${optionStrings.join(', ')}. Received: ${received}`
+        : `Parameter '${field}' received invalid value: ${received}`,
   };
 }
 
-/**
- * Handle "too small" validation errors
- */
-function handleTooSmall(
-  field: string,
-  issue: ZodIssue & { code: 'too_small' }
-): {
-  field: string;
-  issue: string;
-  received?: unknown;
-  expected?: string;
-  suggestion?: string;
-} {
-  const { minimum, type, inclusive } = issue;
+// Zod v3 uses 'type', Zod v4 uses 'origin' for constraint target type
+function getConstraintType(issue: ZodIssue): string | undefined {
+  return (
+    getIssueProperty<string>(issue, 'type') ??
+    getIssueProperty<string>(issue, 'origin')
+  );
+}
+
+function handleTooSmall(field: string, issue: ZodIssue): ZodIssueDetails {
+  // Zod v3: minimum, Zod v4: min
+  const minimum =
+    getIssueProperty<number>(issue, 'minimum') ??
+    getIssueProperty<number>(issue, 'min') ??
+    0;
+  const type = getConstraintType(issue);
+  const inclusive = getIssueProperty<boolean>(issue, 'inclusive') ?? true;
 
   if (type === 'string') {
     return {
@@ -178,20 +204,14 @@ function handleTooSmall(
   };
 }
 
-/**
- * Handle "too big" validation errors
- */
-function handleTooBig(
-  field: string,
-  issue: ZodIssue & { code: 'too_big' }
-): {
-  field: string;
-  issue: string;
-  received?: unknown;
-  expected?: string;
-  suggestion?: string;
-} {
-  const { maximum, type, inclusive } = issue;
+function handleTooBig(field: string, issue: ZodIssue): ZodIssueDetails {
+  // Zod v3: maximum, Zod v4: max
+  const maximum =
+    getIssueProperty<number>(issue, 'maximum') ??
+    getIssueProperty<number>(issue, 'max') ??
+    0;
+  const type = getConstraintType(issue);
+  const inclusive = getIssueProperty<boolean>(issue, 'inclusive') ?? true;
 
   if (type === 'string') {
     return {
@@ -292,13 +312,7 @@ export function isZodError(error: unknown): error is ZodError {
 export function createUserFriendlyMessage(error: unknown): {
   message: string;
   isValidationError: boolean;
-  details?: Array<{
-    field: string;
-    issue: string;
-    received?: unknown;
-    expected?: string | string[];
-    suggestion?: string;
-  }>;
+  details?: ZodIssueDetails[];
 } {
   if (isZodError(error)) {
     const parsed = parseZodError(error);

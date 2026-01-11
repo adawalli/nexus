@@ -245,12 +245,13 @@ describe('Search Schema Validation', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ZodError);
         const zodError = error as ZodError;
-        expect(zodError.errors).toHaveLength(3);
-        expect(zodError.errors.some(e => e.path.includes('query'))).toBe(true);
-        expect(zodError.errors.some(e => e.path.includes('maxTokens'))).toBe(
+        // Zod v4 uses 'issues' instead of 'errors'
+        expect(zodError.issues).toHaveLength(3);
+        expect(zodError.issues.some(e => e.path.includes('query'))).toBe(true);
+        expect(zodError.issues.some(e => e.path.includes('maxTokens'))).toBe(
           true
         );
-        expect(zodError.errors.some(e => e.path.includes('temperature'))).toBe(
+        expect(zodError.issues.some(e => e.path.includes('temperature'))).toBe(
           true
         );
       }
