@@ -2,7 +2,7 @@
 
 ## Phase 1: Core Features
 
-1. [ ] Deep Research Modes - Add `model` parameter to search tool supporting all four Perplexity Sonar tiers (sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research) with model-specific timeouts, cost notes in metadata, and backwards-compatible defaults. See `tasks/prd-deep-research-modes.md`. `L`
+1. [x] Deep Research Modes - Add `model` parameter to search tool supporting all four Perplexity Sonar tiers (sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research) with model-specific timeouts, cost notes in metadata, and backwards-compatible defaults. See `tasks/prd-deep-research-modes.md`. `L`
 
 ## Phase 2: Enhanced Search
 

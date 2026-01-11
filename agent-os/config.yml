@@ -1,12 +1,12 @@
 version: 2.1.1
-last_compiled: 2026-01-11 14:25:03
+last_compiled: 2026-01-11 16:53:50
 
 # ================================================
 # Compiled with the following settings:
 #
 # To change these settings, run ~/agent-os/scripts/project-update.sh to re-compile your project with the new settings.
 # ================================================
-profile: ralph
+profile: react
 claude_code_commands: true
 use_claude_code_subagents: true
 agent_os_commands: false

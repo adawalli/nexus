@@ -1,6 +1,7 @@
 import {
   ResponseOptimizer,
   formatResponseQuick,
+  type ResponseMetadataOptions,
 } from '../utils/response-optimizer.js';
 
 import type { ChatCompletionResponse, Usage } from './openrouter.js';
@@ -35,6 +36,10 @@ export interface SearchMetadata {
   usage?: Usage;
   /** Response time in milliseconds */
   responseTime?: number;
+  /** Cost tier classification for billing awareness */
+  costTier?: 'standard' | 'premium';
+  /** Effective timeout applied in milliseconds */
+  timeout?: number;
 }
 
 /**
@@ -83,7 +88,8 @@ export function formatSearchResponse(
   query: string,
   startTime: number,
   temperature?: number,
-  maxTokens?: number
+  maxTokens?: number,
+  metadataOptions?: ResponseMetadataOptions
 ): SearchResponse {
   // Use optimized formatter for better performance
   return formatResponseQuick(
@@ -91,7 +97,8 @@ export function formatSearchResponse(
     query,
     startTime,
     temperature,
-    maxTokens
+    maxTokens,
+    metadataOptions
   );
 }
 
@@ -103,7 +110,8 @@ export function formatSearchResponseWithMetrics(
   query: string,
   startTime: number,
   temperature?: number,
-  maxTokens?: number
+  maxTokens?: number,
+  metadataOptions?: ResponseMetadataOptions
 ) {
   const optimizer = ResponseOptimizer.getInstance();
   return optimizer.formatSearchResponseOptimized(
@@ -111,7 +119,8 @@ export function formatSearchResponseWithMetrics(
     query,
     startTime,
     temperature,
-    maxTokens
+    maxTokens,
+    metadataOptions
   );
 }
 

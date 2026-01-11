@@ -10,6 +10,7 @@ import type {
   SearchSource,
   SearchMetadata,
 } from '../types/search.js';
+import type { CostTier } from '../constants/models.js';
 
 // Performance API declarations for Node.js
 declare const performance: {
@@ -57,6 +58,16 @@ interface SourceExtractionResult {
 }
 
 /**
+ * Additional metadata options for response formatting
+ */
+export interface ResponseMetadataOptions {
+  /** Effective timeout applied in milliseconds */
+  timeout?: number;
+  /** Cost tier classification */
+  costTier?: CostTier;
+}
+
+/**
  * High-performance response formatter with optimization features
  */
 export class ResponseOptimizer {
@@ -88,7 +99,8 @@ export class ResponseOptimizer {
     query: string,
     startTime: number,
     temperature?: number,
-    maxTokens?: number
+    maxTokens?: number,
+    metadataOptions?: ResponseMetadataOptions
   ): { response: SearchResponse; metrics: ResponseProcessingMetrics } {
     const processingStartTime = performance.now();
     const endTime = Date.now();
@@ -117,7 +129,8 @@ export class ResponseOptimizer {
       endTime,
       temperature,
       maxTokens,
-      responseTime
+      responseTime,
+      metadataOptions
     );
 
     const searchResponse: SearchResponse = {
@@ -281,7 +294,8 @@ export class ResponseOptimizer {
     timestamp: number,
     temperature?: number,
     maxTokens?: number,
-    responseTime?: number
+    responseTime?: number,
+    metadataOptions?: ResponseMetadataOptions
   ): SearchResult {
     // Create metadata object with direct property assignment
     const metadata: SearchMetadata = {
@@ -295,6 +309,14 @@ export class ResponseOptimizer {
     if (maxTokens !== undefined) metadata.maxTokens = maxTokens;
     if (apiResponse.usage) metadata.usage = apiResponse.usage;
     if (responseTime !== undefined) metadata.responseTime = responseTime;
+
+    // Add new metadata fields from options
+    if (metadataOptions?.timeout !== undefined) {
+      metadata.timeout = metadataOptions.timeout;
+    }
+    if (metadataOptions?.costTier !== undefined) {
+      metadata.costTier = metadataOptions.costTier;
+    }
 
     return {
       content,
@@ -346,6 +368,7 @@ export class ResponseOptimizer {
       startTime: number;
       temperature?: number;
       maxTokens?: number;
+      metadataOptions?: ResponseMetadataOptions;
     }>
   ): Array<{ response: SearchResponse; metrics: ResponseProcessingMetrics }> {
     return responses.map(item =>
@@ -354,7 +377,8 @@ export class ResponseOptimizer {
         item.query,
         item.startTime,
         item.temperature,
-        item.maxTokens
+        item.maxTokens,
+        item.metadataOptions
       )
     );
   }
@@ -454,7 +478,8 @@ export function formatResponseQuick(
   query: string,
   startTime: number,
   temperature?: number,
-  maxTokens?: number
+  maxTokens?: number,
+  metadataOptions?: ResponseMetadataOptions
 ): SearchResponse {
   const optimizer = ResponseOptimizer.getInstance();
   const result = optimizer.formatSearchResponseOptimized(
@@ -462,7 +487,8 @@ export function formatResponseQuick(
     query,
     startTime,
     temperature,
-    maxTokens
+    maxTokens,
+    metadataOptions
   );
   return result.response;
 }

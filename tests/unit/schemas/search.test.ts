@@ -14,7 +14,7 @@ describe('Search Schema Validation', () => {
       const result = validateSearchInput(input);
 
       expect(result.query).toBe('test query');
-      expect(result.model).toBe('perplexity/sonar');
+      expect(result.model).toBe('sonar');
       expect(result.maxTokens).toBe(1000);
       expect(result.temperature).toBe(0.3);
     });
@@ -22,7 +22,7 @@ describe('Search Schema Validation', () => {
     it('should validate with all parameters', () => {
       const input = {
         query: 'test query',
-        model: 'perplexity/sonar' as const,
+        model: 'sonar' as const,
         maxTokens: 2000,
         temperature: 0.5,
       };
@@ -30,7 +30,7 @@ describe('Search Schema Validation', () => {
       const result = validateSearchInput(input);
 
       expect(result.query).toBe('test query');
-      expect(result.model).toBe('perplexity/sonar');
+      expect(result.model).toBe('sonar');
       expect(result.maxTokens).toBe(2000);
       expect(result.temperature).toBe(0.5);
     });
@@ -39,7 +39,7 @@ describe('Search Schema Validation', () => {
       const input = { query: 'test query' };
       const result = validateSearchInput(input);
 
-      expect(result.model).toBe('perplexity/sonar');
+      expect(result.model).toBe('sonar');
       expect(result.maxTokens).toBe(1000);
       expect(result.temperature).toBe(0.3);
     });
@@ -205,12 +205,15 @@ describe('Search Schema Validation', () => {
   });
 
   describe('SUPPORTED_MODELS', () => {
-    it('should contain expected Perplexity models', () => {
-      expect(SUPPORTED_MODELS).toContain('perplexity/sonar');
+    it('should contain all four user-friendly model names', () => {
+      expect(SUPPORTED_MODELS).toContain('sonar');
+      expect(SUPPORTED_MODELS).toContain('sonar-pro');
+      expect(SUPPORTED_MODELS).toContain('sonar-reasoning-pro');
+      expect(SUPPORTED_MODELS).toContain('sonar-deep-research');
     });
 
-    it('should have correct number of models', () => {
-      expect(SUPPORTED_MODELS).toHaveLength(1);
+    it('should have exactly four models', () => {
+      expect(SUPPORTED_MODELS).toHaveLength(4);
     });
   });
 
@@ -218,7 +221,7 @@ describe('Search Schema Validation', () => {
     it('should parse valid input', () => {
       const input = {
         query: 'test query',
-        model: 'perplexity/sonar',
+        model: 'sonar',
         maxTokens: 500,
         temperature: 0.3,
       };
@@ -255,6 +258,142 @@ describe('Search Schema Validation', () => {
           true
         );
       }
+    });
+  });
+
+  // Task Group 2: Model and Timeout Validation Tests
+  describe('Model parameter validation', () => {
+    it('should accept all four valid model names', () => {
+      const models = [
+        'sonar',
+        'sonar-pro',
+        'sonar-reasoning-pro',
+        'sonar-deep-research',
+      ];
+
+      for (const model of models) {
+        const input = { query: 'test query', model };
+        const result = validateSearchInput(input);
+        expect(result.model).toBe(model);
+      }
+    });
+
+    it('should return descriptive error with valid options when invalid model provided', () => {
+      const input = {
+        query: 'test query',
+        model: 'invalid',
+      };
+
+      try {
+        validateSearchInput(input);
+        expect.fail('Should have thrown validation error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ZodError);
+        const zodError = error as ZodError;
+        const modelError = zodError.issues.find(e => e.path.includes('model'));
+        expect(modelError).toBeDefined();
+        expect(modelError?.message).toContain("Invalid model 'invalid'");
+        expect(modelError?.message).toContain('sonar');
+        expect(modelError?.message).toContain('sonar-pro');
+        expect(modelError?.message).toContain('sonar-reasoning-pro');
+        expect(modelError?.message).toContain('sonar-deep-research');
+      }
+    });
+
+    it('should apply default model when not specified', () => {
+      const input = { query: 'test query' };
+      const result = validateSearchInput(input);
+      expect(result.model).toBe('sonar');
+    });
+
+    it('should maintain backwards compatibility with existing calls', () => {
+      // Existing calls without model parameter should work
+      const input = {
+        query: 'test query',
+        maxTokens: 500,
+        temperature: 0.5,
+      };
+
+      const result = validateSearchInput(input);
+      expect(result.model).toBe('sonar');
+      expect(result.maxTokens).toBe(500);
+      expect(result.temperature).toBe(0.5);
+    });
+  });
+
+  describe('Timeout parameter validation', () => {
+    it('should accept valid timeout values within bounds', () => {
+      const input = {
+        query: 'test query',
+        timeout: 30000,
+      };
+
+      const result = validateSearchInput(input);
+      expect(result.timeout).toBe(30000);
+    });
+
+    it('should accept minimum timeout value (5000ms)', () => {
+      const input = {
+        query: 'test query',
+        timeout: 5000,
+      };
+
+      const result = validateSearchInput(input);
+      expect(result.timeout).toBe(5000);
+    });
+
+    it('should accept maximum timeout value (600000ms)', () => {
+      const input = {
+        query: 'test query',
+        timeout: 600000,
+      };
+
+      const result = validateSearchInput(input);
+      expect(result.timeout).toBe(600000);
+    });
+
+    it('should reject timeout below minimum (5000ms)', () => {
+      const input = {
+        query: 'test query',
+        timeout: 4999,
+      };
+
+      expect(() => validateSearchInput(input)).toThrow(ZodError);
+      try {
+        validateSearchInput(input);
+      } catch (error) {
+        const zodError = error as ZodError;
+        const timeoutError = zodError.issues.find(e =>
+          e.path.includes('timeout')
+        );
+        expect(timeoutError).toBeDefined();
+        expect(timeoutError?.message).toContain('5000');
+      }
+    });
+
+    it('should reject timeout above maximum (600000ms)', () => {
+      const input = {
+        query: 'test query',
+        timeout: 600001,
+      };
+
+      expect(() => validateSearchInput(input)).toThrow(ZodError);
+      try {
+        validateSearchInput(input);
+      } catch (error) {
+        const zodError = error as ZodError;
+        const timeoutError = zodError.issues.find(e =>
+          e.path.includes('timeout')
+        );
+        expect(timeoutError).toBeDefined();
+        expect(timeoutError?.message).toContain('600000');
+      }
+    });
+
+    it('should allow timeout to be optional', () => {
+      const input = { query: 'test query' };
+      const result = validateSearchInput(input);
+      expect(result.timeout).toBeUndefined();
     });
   });
 });

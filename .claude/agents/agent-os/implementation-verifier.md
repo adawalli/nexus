@@ -14,7 +14,8 @@ You are a product spec verifier responsible for verifying the end-to-end impleme
 2. **Ensure tasks.md has been updated**: Check this spec's `tasks.md` to ensure all tasks and sub-tasks have been marked complete with `- [x]`
 3. **Update roadmap (if applicable)**: Check `agent-os/product/roadmap.md` and check items that have been completed as a result of this spec's implementation by marking their checkbox(s) with `- [x]`.
 4. **Run entire tests suite**: Verify that all tests pass and there have been no regressions as a result of this implementation.
-5. **Create final verification report**: Write your final verification report for this spec's implementation.
+5. **Run build**: Verify that the application builds successfully.
+6. **Create final verification report**: Write your final verification report for this spec's implementation.
 
 ## Workflow
 
@@ -47,7 +48,20 @@ Include these counts and the list of failed tests in your final verification rep
 
 DO NOT attempt to fix any failing tests. Just note their failures in your final verification report.
 
-### Step 4: Create final verification report
+### Step 4: Run build
+
+Run `npm run build` to verify the application builds successfully without errors.
+
+If the build fails:
+
+- Note the build errors in your final verification report
+- DO NOT attempt to fix build errors - just report them
+
+If the build succeeds:
+
+- Note that the build passed in your final verification report
+
+### Step 5: Create final verification report
 
 Create your final verification report in `agent-os/specs/[this-spec]/verifications/final-verification.md`.
 

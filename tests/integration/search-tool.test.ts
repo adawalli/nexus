@@ -69,7 +69,7 @@ This information reflects the current state of AI technology and its application
 
       const searchInput = {
         query: 'What are the latest developments in AI technology?',
-        model: 'perplexity/sonar' as const,
+        model: 'sonar' as const,
         maxTokens: 1500,
         temperature: 0.3,
       };
@@ -95,13 +95,13 @@ This information reflects the current state of AI technology and its application
 
       // Verify metadata
       expect(searchResult.metadata.query).toBe(searchInput.query);
-      expect(searchResult.metadata.model).toBe(searchInput.model);
+      expect(searchResult.metadata.model).toBe('perplexity/sonar'); // Model is mapped to OpenRouter identifier
       expect(searchResult.metadata.temperature).toBe(searchInput.temperature);
       expect(searchResult.metadata.maxTokens).toBe(searchInput.maxTokens);
       expect(searchResult.metadata.usage?.total_tokens).toBe(135);
       expect(searchResult.metadata.responseTime).toBeGreaterThan(0);
 
-      // Verify API call was made correctly
+      // Verify API call was made correctly with mapped model identifier
       expect(mockFetch).toHaveBeenCalledWith(
         'https://openrouter.ai/api/v1/chat/completions',
         expect.objectContaining({
@@ -111,7 +111,7 @@ This information reflects the current state of AI technology and its application
             'Content-Type': 'application/json',
           }),
           body: JSON.stringify({
-            model: searchInput.model,
+            model: 'perplexity/sonar', // User-friendly 'sonar' maps to OpenRouter identifier
             messages: [
               {
                 role: 'user',
@@ -323,6 +323,176 @@ For more details, see the comprehensive report at https://www.nature.com/climate
       expect(endTime - startTime).toBeGreaterThan(400); // At least the simulated delay
       expect(endTime - startTime).toBeLessThan(2000); // Should complete within 2 seconds
       expect(result.result?.metadata.responseTime).toBeGreaterThan(400);
+    });
+  });
+
+  describe('Deep Research Modes Integration', () => {
+    it('should complete end-to-end search with default model (sonar)', async () => {
+      const mockApiResponse = {
+        ok: true,
+        json: async () => ({
+          id: 'chatcmpl-default-model',
+          object: 'chat.completion',
+          created: Math.floor(Date.now() / 1000),
+          model: 'perplexity/sonar',
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: 'assistant',
+                content:
+                  'Quick answer about TypeScript features.\n\nSources:\nhttps://www.typescriptlang.org/docs',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: {
+            prompt_tokens: 10,
+            completion_tokens: 25,
+            total_tokens: 35,
+          },
+        }),
+      };
+
+      mockFetch.mockResolvedValue(mockApiResponse);
+
+      // Call without specifying model - should use default 'sonar'
+      const result = await searchTool.search({
+        query: 'TypeScript features',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.result).toBeDefined();
+
+      const searchResult = result.result!;
+
+      // Verify model defaults to sonar
+      expect(searchResult.metadata.model).toBe('perplexity/sonar');
+
+      // Verify timeout is set (should be 30000ms for sonar)
+      expect(searchResult.metadata.timeout).toBe(30000);
+
+      // Verify costTier is standard for default model
+      expect(searchResult.metadata.costTier).toBe('standard');
+
+      // Verify API call used correct model identifier
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://openrouter.ai/api/v1/chat/completions',
+        expect.objectContaining({
+          body: expect.stringContaining('"model":"perplexity/sonar"'),
+        })
+      );
+    });
+
+    it('should complete end-to-end search with premium model (sonar-pro)', async () => {
+      const mockApiResponse = {
+        ok: true,
+        json: async () => ({
+          id: 'chatcmpl-premium-model',
+          object: 'chat.completion',
+          created: Math.floor(Date.now() / 1000),
+          model: 'perplexity/sonar-pro',
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: 'assistant',
+                content:
+                  'Detailed multi-step analysis of machine learning algorithms.\n\nSources:\nhttps://arxiv.org/ml-papers',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: {
+            prompt_tokens: 15,
+            completion_tokens: 80,
+            total_tokens: 95,
+          },
+        }),
+      };
+
+      mockFetch.mockResolvedValue(mockApiResponse);
+
+      const result = await searchTool.search({
+        query: 'machine learning algorithms comparison',
+        model: 'sonar-pro',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.result).toBeDefined();
+
+      const searchResult = result.result!;
+
+      // Verify model is mapped correctly to full OpenRouter identifier
+      expect(searchResult.metadata.model).toBe('perplexity/sonar-pro');
+
+      // Verify timeout is set for sonar-pro (60000ms)
+      expect(searchResult.metadata.timeout).toBe(60000);
+
+      // Verify costTier is premium for sonar-pro
+      expect(searchResult.metadata.costTier).toBe('premium');
+
+      // Verify API call used correct model identifier
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://openrouter.ai/api/v1/chat/completions',
+        expect.objectContaining({
+          body: expect.stringContaining('"model":"perplexity/sonar-pro"'),
+        })
+      );
+    });
+
+    it('should complete end-to-end search with timeout override', async () => {
+      const mockApiResponse = {
+        ok: true,
+        json: async () => ({
+          id: 'chatcmpl-timeout-override',
+          object: 'chat.completion',
+          created: Math.floor(Date.now() / 1000),
+          model: 'perplexity/sonar-deep-research',
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: 'assistant',
+                content:
+                  'Comprehensive research report on quantum computing.\n\nSources:\nhttps://quantum.research.org',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: {
+            prompt_tokens: 20,
+            completion_tokens: 200,
+            total_tokens: 220,
+          },
+        }),
+      };
+
+      mockFetch.mockResolvedValue(mockApiResponse);
+
+      const customTimeout = 450000; // 7.5 minutes
+
+      const result = await searchTool.search({
+        query: 'comprehensive quantum computing research',
+        model: 'sonar-deep-research',
+        timeout: customTimeout,
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.result).toBeDefined();
+
+      const searchResult = result.result!;
+
+      // Verify model is mapped correctly
+      expect(searchResult.metadata.model).toBe(
+        'perplexity/sonar-deep-research'
+      );
+
+      // Verify timeout override is applied instead of model default (300000ms)
+      expect(searchResult.metadata.timeout).toBe(customTimeout);
+
+      // Verify costTier is premium for deep research
+      expect(searchResult.metadata.costTier).toBe('premium');
     });
   });
 });
