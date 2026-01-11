@@ -26,8 +26,9 @@ export const SUPPORTED_MODELS: UserFriendlyModelName[] = [...VALID_MODELS];
  */
 const modelSchema = z
   .enum(VALID_MODELS, {
-    error: ((val: { input: unknown }) =>
-      `Invalid model '${val.input}'. Valid options: ${VALID_MODELS.join(', ')}`) as unknown as string,
+    error: issue => ({
+      message: `Invalid model '${issue.input}'. Valid options: ${VALID_MODELS.join(', ')}`,
+    }),
   })
   .default('sonar')
   .describe(
