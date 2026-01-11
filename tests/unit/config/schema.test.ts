@@ -35,15 +35,13 @@ describe('Configuration Schema', () => {
     it('should have environment variable names for all fields', () => {
       for (const schema of CONFIG_SCHEMA) {
         expect(schema.envVar).toBeDefined();
-        if (Array.isArray(schema.envVar)) {
-          expect(schema.envVar.length).toBeGreaterThan(0);
-          for (const envVar of schema.envVar) {
-            expect(typeof envVar).toBe('string');
-            expect(envVar.trim().length).toBeGreaterThan(0);
-          }
-        } else {
-          expect(typeof schema.envVar).toBe('string');
-          expect(schema.envVar.trim().length).toBeGreaterThan(0);
+        const envVars = Array.isArray(schema.envVar)
+          ? schema.envVar
+          : [schema.envVar];
+        expect(envVars.length).toBeGreaterThan(0);
+        for (const envVar of envVars) {
+          expect(typeof envVar).toBe('string');
+          expect(envVar.trim().length).toBeGreaterThan(0);
         }
       }
     });
@@ -231,6 +229,62 @@ describe('Configuration Schema', () => {
       const schema = getSchemaForField('baseUrl');
       const result = schema?.validator!(123);
       expect(result).toBe('Must be a string');
+    });
+  });
+
+  describe('Cache Size Validation', () => {
+    it('should validate cache size within range', () => {
+      const schema = getSchemaForField('cacheMaxSize');
+      expect(schema?.validator).toBeDefined();
+
+      const result = schema?.validator!(100);
+      expect(result).toBeNull();
+    });
+
+    it('should reject cache size below minimum', () => {
+      const schema = getSchemaForField('cacheMaxSize');
+      const result = schema?.validator!(5);
+      expect(result).toBe('Cache size must be at least 10 entries');
+    });
+
+    it('should reject cache size above maximum', () => {
+      const schema = getSchemaForField('cacheMaxSize');
+      const result = schema?.validator!(50000);
+      expect(result).toBe('Cache size cannot exceed 10,000 entries');
+    });
+
+    it('should accept minimum cache size', () => {
+      const schema = getSchemaForField('cacheMaxSize');
+      const result = schema?.validator!(10);
+      expect(result).toBeNull();
+    });
+
+    it('should accept maximum cache size', () => {
+      const schema = getSchemaForField('cacheMaxSize');
+      const result = schema?.validator!(10000);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('Cache TTL Validation', () => {
+    it('should validate cache TTL within range', () => {
+      const schema = getSchemaForField('cacheTtl');
+      expect(schema?.validator).toBeDefined();
+
+      const result = schema?.validator!(30000);
+      expect(result).toBeNull();
+    });
+
+    it('should reject cache TTL below minimum', () => {
+      const schema = getSchemaForField('cacheTtl');
+      const result = schema?.validator!(500);
+      expect(result).toBe('Cache TTL must be at least 1000ms (1 second)');
+    });
+
+    it('should reject cache TTL above maximum', () => {
+      const schema = getSchemaForField('cacheTtl');
+      const result = schema?.validator!(90000000);
+      expect(result).toBe('Cache TTL cannot exceed 24 hours');
     });
   });
 });

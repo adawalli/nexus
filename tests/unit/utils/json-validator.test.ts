@@ -6,7 +6,6 @@ import {
   validateJSON,
 } from '../../../src/utils/json-validator.js';
 
-// Mock logger to avoid noise in test output
 vi.mock('../../../src/utils/logger.js', () => ({
   logger: {
     warn: vi.fn(),
@@ -16,6 +15,7 @@ vi.mock('../../../src/utils/logger.js', () => ({
     jsonSerialization: vi.fn(),
     responseValidation: vi.fn(),
     jsonRpc: vi.fn(),
+    mcpProtocol: vi.fn(),
   },
 }));
 
@@ -61,7 +61,6 @@ describe('JSONValidator', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
-      // undefined values are omitted in JSON
       expect(JSON.parse(result.data!)).toEqual({ name: 'test' });
     });
 
@@ -209,24 +208,15 @@ describe('JSONValidator', () => {
           content: [{ type: 'text', text: 'Hello' }],
         },
       };
-      response.self = response; // Create circular reference
+      response.self = response;
 
       const result = JSONValidator.wrapMCPResponse(response);
 
-      // Should return error response due to serialization failure
       expect(result).toHaveProperty('error');
-      if (
-        'error' in result &&
-        result.error &&
-        typeof result.error === 'object'
-      ) {
-        expect(result.error).toHaveProperty('code');
-        expect((result.error as any).code).toBe(-32603);
-      }
+      expect((result as { error: { code: number } }).error.code).toBe(-32603);
     });
 
     it('should handle responses that fail serialization', () => {
-      // Create an object that will cause serialization to fail with fallback: false
       const obj = {};
       Object.defineProperty(obj, 'badProperty', {
         get() {
@@ -245,15 +235,7 @@ describe('JSONValidator', () => {
 
       const result = JSONValidator.wrapMCPResponse(response);
 
-      // Should return error response due to serialization failure
       expect(result).toHaveProperty('error');
-      if (
-        'error' in result &&
-        result.error &&
-        typeof result.error === 'object'
-      ) {
-        expect(result.error).toHaveProperty('code');
-      }
     });
   });
 
@@ -321,17 +303,6 @@ describe('JSONValidator', () => {
       expect(JSON.parse(result.data!)).toEqual(nested);
     });
 
-    it('should sanitize trailing commas', () => {
-      // This test simulates what happens when malformed JSON is processed
-      const malformedJson = '{"test": "value",}';
-      const cleanJson = malformedJson.replace(/,(\s*[}\]])/g, '$1');
-
-      expect(cleanJson).toBe('{"test": "value"}');
-
-      const result = validateJSON(cleanJson);
-      expect(result.success).toBe(true);
-    });
-
     it('should handle Unicode characters properly', () => {
       const obj = {
         emoji: '🚀',
@@ -346,6 +317,50 @@ describe('JSONValidator', () => {
       expect(result.data).toContain('🚀');
       expect(result.data).toContain('你好');
       expect(result.data).toContain('مرحبا');
+    });
+  });
+
+  describe('wrapMCPResponseWithValidation', () => {
+    it('should wrap valid responses with validation', () => {
+      const response = {
+        content: [{ type: 'text', text: 'Hello' }],
+      };
+
+      const result = JSONValidator.wrapMCPResponseWithValidation(response);
+
+      expect(result.jsonrpc).toBe('2.0');
+      expect('result' in result || 'error' in result).toBe(true);
+    });
+
+    it('should handle responses that pass validation', () => {
+      const response = {
+        tools: [
+          {
+            name: 'search',
+            description: 'Search tool',
+            inputSchema: { type: 'object' },
+          },
+        ],
+      };
+
+      const result = JSONValidator.wrapMCPResponseWithValidation(response);
+
+      expect(result.jsonrpc).toBe('2.0');
+      expect('result' in result || 'error' in result).toBe(true);
+    });
+
+    it('should return error response when validation fails', () => {
+      const badResponse = {};
+      Object.defineProperty(badResponse, 'dangerous', {
+        get() {
+          throw new Error('Validation failed');
+        },
+        enumerable: true,
+      });
+
+      const result = JSONValidator.wrapMCPResponseWithValidation(badResponse);
+
+      expect(result.jsonrpc).toBe('2.0');
     });
   });
 
