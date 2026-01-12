@@ -140,7 +140,7 @@ server.setRequestHandler(
         tools.push({
           name: 'search',
           description:
-            'Nexus AI-powered search using Perplexity models via OpenRouter. Searches the web for current information and provides comprehensive answers with sources. Supports multiple model tiers: sonar (fast Q&A), sonar-pro (multi-step queries), sonar-reasoning-pro (chain-of-thought reasoning), and sonar-deep-research (exhaustive research reports).',
+            'Nexus AI-powered search using Perplexity and Grok models via OpenRouter. Perplexity models (sonar, sonar-pro, sonar-reasoning-pro, sonar-deep-research) search the web for current information. Grok 4 provides responses from training data without real-time search.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -154,12 +154,13 @@ server.setRequestHandler(
               model: {
                 type: 'string',
                 description:
-                  'Perplexity model to use for search. Options: sonar (fast Q&A, 30s timeout), sonar-pro (multi-step queries, 60s timeout), sonar-reasoning-pro (chain-of-thought reasoning, 120s timeout), sonar-deep-research (exhaustive research reports, 300s timeout). Premium models (sonar-pro and above) have higher API costs.',
+                  'Model to use for search. Options: sonar (fast Q&A, 30s timeout), sonar-pro (multi-step queries, 60s timeout), sonar-reasoning-pro (chain-of-thought reasoning, 120s timeout), sonar-deep-research (exhaustive research reports, 300s timeout), grok-4 (training-data knowledge, 60s timeout). Premium models (sonar-pro and above, including grok-4) have higher API costs.',
                 enum: [
                   'sonar',
                   'sonar-pro',
                   'sonar-reasoning-pro',
                   'sonar-deep-research',
+                  'grok-4',
                 ],
                 default: 'sonar',
               },
@@ -288,6 +289,13 @@ server.setRequestHandler(
               metadataLines.push(`- Timeout: ${result.metadata.timeout}ms`);
             }
 
+            // Include search type in metadata
+            if (result.metadata.searchType !== undefined) {
+              metadataLines.push(
+                `- Search type: ${result.metadata.searchType}`
+              );
+            }
+
             // Include sources count if any
             if (result.sources.length > 0) {
               metadataLines.push(`- Sources: ${result.sources.length} found`);
@@ -314,6 +322,7 @@ server.setRequestHandler(
               responseTime: result.metadata.responseTime,
               timeout: result.metadata.timeout,
               costTier: result.metadata.costTier,
+              searchType: result.metadata.searchType,
             });
 
             return {

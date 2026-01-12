@@ -12,8 +12,10 @@ import {
   MODELS,
   MODEL_TIMEOUTS,
   MODEL_COST_TIERS,
+  MODEL_SEARCH_TYPES,
   type UserFriendlyModelName,
   type CostTier,
+  type SearchType,
 } from '../constants/models.js';
 import {
   validateSearchInput,
@@ -75,6 +77,13 @@ function getEffectiveTimeout(
  */
 function getCostTier(modelName: UserFriendlyModelName): CostTier {
   return MODEL_COST_TIERS[modelName];
+}
+
+/**
+ * Get the search type for a model
+ */
+function getSearchType(modelName: UserFriendlyModelName): SearchType {
+  return MODEL_SEARCH_TYPES[modelName];
 }
 
 /**
@@ -223,7 +232,7 @@ export class SearchTool {
       return createErrorResponse(parsedError.message, 'validation');
     }
 
-    // Step 2: Resolve model name to OpenRouter identifier and determine timeout/cost tier
+    // Step 2: Resolve model name to OpenRouter identifier and determine timeout/cost tier/search type
     const userFriendlyModel = validatedInput.model as UserFriendlyModelName;
     const openRouterModelId = resolveModelIdentifier(userFriendlyModel);
     const effectiveTimeout = getEffectiveTimeout(
@@ -231,12 +240,14 @@ export class SearchTool {
       validatedInput.timeout
     );
     const costTier = getCostTier(userFriendlyModel);
+    const searchType = getSearchType(userFriendlyModel);
 
     logger.debug('Model resolution complete', {
       userFriendlyModel,
       openRouterModelId,
       effectiveTimeout,
       costTier,
+      searchType,
     });
 
     // Step 3: Generate keys for cache and deduplication
@@ -278,6 +289,7 @@ export class SearchTool {
             openRouterModelId,
             effectiveTimeout,
             costTier,
+            searchType,
             cacheKey,
             startTime
           );
@@ -315,6 +327,7 @@ export class SearchTool {
     openRouterModelId: ModelId,
     effectiveTimeout: number,
     costTier: CostTier,
+    searchType: SearchType,
     cacheKey: string,
     startTime: number
   ): Promise<SearchResponse> {
@@ -378,6 +391,7 @@ export class SearchTool {
         {
           timeout: effectiveTimeout,
           costTier,
+          searchType,
         }
       );
 
