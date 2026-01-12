@@ -22,6 +22,7 @@ repos:
         language: system
         files: \.(js|jsx|ts|tsx)$
         require_serial: false
+        stages: [pre-commit]
 
       - id: prettier
         name: Prettier
@@ -29,19 +30,13 @@ repos:
         language: system
         files: \.(js|jsx|ts|tsx|json|css|md|yml|yaml)$
         require_serial: false
+        stages: [pre-commit]
 
-      - id: typescript-build
-        name: TypeScript Build
-        entry: npm run build
+      - id: release-validate
+        name: Release Validation
+        entry: npm run release:validate
         language: system
-        files: \.(ts|tsx)$
+        files: \.(ts|tsx|js|jsx)$
         require_serial: false
         pass_filenames: false
-
-      - id: vitest
-        name: Vitest Tests
-        entry: npm test
-        language: system
-        files: \.(ts|tsx)$
-        require_serial: false
-        pass_filenames: false
+        stages: [pre-push]
