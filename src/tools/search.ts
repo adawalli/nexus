@@ -9,7 +9,7 @@ import {
 } from '../clients/openrouter.js';
 import { ConfigurationManager } from '../config/manager.js';
 import {
-  PERPLEXITY_MODELS,
+  MODELS,
   MODEL_TIMEOUTS,
   MODEL_COST_TIERS,
   type UserFriendlyModelName,
@@ -19,10 +19,7 @@ import {
   validateSearchInput,
   type SearchToolInput,
 } from '../schemas/search.js';
-import type {
-  ChatCompletionRequest,
-  PerplexityModelId,
-} from '../types/openrouter.js';
+import type { ChatCompletionRequest, ModelId } from '../types/openrouter.js';
 import {
   formatSearchResponseWithMetrics,
   createErrorResponse,
@@ -56,10 +53,8 @@ const logger = winston.createLogger({
 /**
  * Resolve user-friendly model name to OpenRouter model identifier
  */
-function resolveModelIdentifier(
-  modelName: UserFriendlyModelName
-): PerplexityModelId {
-  return PERPLEXITY_MODELS[modelName];
+function resolveModelIdentifier(modelName: UserFriendlyModelName): ModelId {
+  return MODELS[modelName];
 }
 
 /**
@@ -317,7 +312,7 @@ export class SearchTool {
    */
   private async performActualSearch(
     validatedInput: SearchToolInput,
-    openRouterModelId: PerplexityModelId,
+    openRouterModelId: ModelId,
     effectiveTimeout: number,
     costTier: CostTier,
     cacheKey: string,

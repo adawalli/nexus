@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import {
-  PERPLEXITY_MODELS,
+  MODELS,
   MIN_TIMEOUT_MS,
   MAX_TIMEOUT_MS,
   type UserFriendlyModelName,
@@ -10,7 +10,7 @@ import {
 /**
  * Valid model names derived from the constants
  */
-const VALID_MODELS = Object.keys(PERPLEXITY_MODELS) as [
+const VALID_MODELS = Object.keys(MODELS) as [
   UserFriendlyModelName,
   ...UserFriendlyModelName[],
 ];

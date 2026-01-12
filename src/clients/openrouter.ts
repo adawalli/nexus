@@ -3,7 +3,7 @@ import type {
   ChatCompletionResponse,
   ChatCompletionChunk,
   OpenRouterError,
-  PerplexityModelId,
+  ModelId,
 } from '../types/openrouter.js';
 
 export interface OpenRouterClientConfig {
@@ -261,7 +261,7 @@ export class OpenRouterClient {
     request: ChatCompletionRequest
   ): Promise<ChatCompletionResponse> {
     // Default to Perplexity Sonar model if not specified or use a fallback
-    const defaultModel: PerplexityModelId = 'perplexity/sonar';
+    const defaultModel: ModelId = 'perplexity/sonar';
 
     const payload: ChatCompletionRequest = {
       ...request,
@@ -288,7 +288,7 @@ export class OpenRouterClient {
   async *chatCompletionsStream(
     request: ChatCompletionRequest
   ): AsyncGenerator<ChatCompletionChunk, void, unknown> {
-    const defaultModel: PerplexityModelId = 'perplexity/sonar';
+    const defaultModel: ModelId = 'perplexity/sonar';
 
     const payload: ChatCompletionRequest = {
       ...request,
