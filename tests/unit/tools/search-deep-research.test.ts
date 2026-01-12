@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi, type MockedClass } from 'vitest';
 import { SearchTool } from '../../../src/tools/search';
 import type { ChatCompletionResponse } from '../../../src/types/openrouter';
 import {
-  PERPLEXITY_MODELS,
+  MODELS,
   MODEL_TIMEOUTS,
   MODEL_COST_TIERS,
 } from '../../../src/constants/models';
@@ -143,7 +143,7 @@ describe('SearchTool Deep Research Modes', () => {
 
       expect(mockClient.chatCompletions).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: PERPLEXITY_MODELS.sonar,
+          model: MODELS.sonar,
         })
       );
     });
@@ -157,7 +157,7 @@ describe('SearchTool Deep Research Modes', () => {
 
       expect(mockClient.chatCompletions).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: PERPLEXITY_MODELS['sonar-pro'],
+          model: MODELS['sonar-pro'],
         })
       );
     });
@@ -174,7 +174,7 @@ describe('SearchTool Deep Research Modes', () => {
 
       expect(mockClient.chatCompletions).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: PERPLEXITY_MODELS['sonar-reasoning-pro'],
+          model: MODELS['sonar-reasoning-pro'],
         })
       );
     });
@@ -191,7 +191,7 @@ describe('SearchTool Deep Research Modes', () => {
 
       expect(mockClient.chatCompletions).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: PERPLEXITY_MODELS['sonar-deep-research'],
+          model: MODELS['sonar-deep-research'],
         })
       );
     });
