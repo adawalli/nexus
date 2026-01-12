@@ -71,7 +71,7 @@ Client Request → STDIO Transport → MCP Server (src/index.ts)
 - `tests/unit/` - Component tests with mocking
 - `tests/integration/` - End-to-end MCP server tests
 - `tests/fixtures/` - Test data and mock responses
-- Coverage threshold: 90% (branches, functions, lines, statements)
+- Coverage threshold: 80%
 
 ## Environment Variables
 
