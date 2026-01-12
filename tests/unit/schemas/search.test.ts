@@ -205,15 +205,16 @@ describe('Search Schema Validation', () => {
   });
 
   describe('SUPPORTED_MODELS', () => {
-    it('should contain all four user-friendly model names', () => {
+    it('should contain all user-friendly model names', () => {
       expect(SUPPORTED_MODELS).toContain('sonar');
       expect(SUPPORTED_MODELS).toContain('sonar-pro');
       expect(SUPPORTED_MODELS).toContain('sonar-reasoning-pro');
       expect(SUPPORTED_MODELS).toContain('sonar-deep-research');
+      expect(SUPPORTED_MODELS).toContain('grok-4');
     });
 
-    it('should have exactly four models', () => {
-      expect(SUPPORTED_MODELS).toHaveLength(4);
+    it('should have exactly five models', () => {
+      expect(SUPPORTED_MODELS).toHaveLength(5);
     });
   });
 
@@ -263,12 +264,13 @@ describe('Search Schema Validation', () => {
 
   // Task Group 2: Model and Timeout Validation Tests
   describe('Model parameter validation', () => {
-    it('should accept all four valid model names', () => {
+    it('should accept all valid model names', () => {
       const models = [
         'sonar',
         'sonar-pro',
         'sonar-reasoning-pro',
         'sonar-deep-research',
+        'grok-4',
       ];
 
       for (const model of models) {
@@ -297,6 +299,7 @@ describe('Search Schema Validation', () => {
         expect(modelError?.message).toContain('sonar-pro');
         expect(modelError?.message).toContain('sonar-reasoning-pro');
         expect(modelError?.message).toContain('sonar-deep-research');
+        expect(modelError?.message).toContain('grok-4');
       }
     });
 
