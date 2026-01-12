@@ -4,6 +4,7 @@ Now that we have a spec and tasks list ready for implementation, we will proceed
 
 PHASE 1: Determine which task group(s) from tasks.md should be implemented
 PHASE 2: Delegate implementation to the implementer subagent
+PHASE 2.5: Simplify modified code
 PHASE 3: After ALL task groups have been implemented, delegate to implementation-verifier to produce the final verification report.
 
 Follow each of these phases and their individual workflows IN SEQUENCE:
@@ -28,9 +29,9 @@ If not, then please specify which task(s) to implement.
 
 ### PHASE 2: Delegate implementation to the implementer subagent
 
-Delegate to the **implementer** subagent to implement the specified task group(s):
+Use the Task tool with `subagent_type: "implementer"` to spawn the implementer subagent.
 
-Provide to the subagent:
+In the Task prompt, provide:
 
 - The specific task group(s) from `agent-os/specs/[this-spec]/tasks.md` including the parent task, all sub-tasks, and any sub-bullet points
 - The path to this spec's documentation: `agent-os/specs/[this-spec]/spec.md`
@@ -44,13 +45,25 @@ Instruct the subagent to:
 3. Implement the assigned task group according to requirements and standards
 4. Update `agent-os/specs/[this-spec]/tasks.md` to mark completed tasks with `- [x]`
 
+### PHASE 2.5: Simplify modified code
+
+Before proceeding to verification, use the Task tool with `subagent_type: "code-simplifier:code-simplifier"` to analyze and simplify all code that was modified during this implementation session.
+
+The agent should focus on:
+
+- Code changes made during this implementation
+- Improving clarity and maintainability
+- Ensuring consistency with existing patterns
+
+Once simplification is complete, proceed to PHASE 3.
+
 ### PHASE 3: Produce the final verification report
 
 IF ALL task groups in tasks.md are marked complete with `- [x]`, then proceed with this step. Otherwise, return to PHASE 1.
 
-Assuming all tasks are marked complete, then delegate to the **implementation-verifier** subagent to do its implementation verification and produce its final verification report.
+Assuming all tasks are marked complete, use the Task tool with `subagent_type: "implementation-verifier"` to spawn the verification subagent.
 
-Provide to the subagent the following:
+In the Task prompt, provide:
 
 - The path to this spec: `agent-os/specs/[this-spec]`
   Instruct the subagent to do the following:
