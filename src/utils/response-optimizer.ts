@@ -10,7 +10,7 @@ import type {
   SearchSource,
   SearchMetadata,
 } from '../types/search.js';
-import type { CostTier } from '../constants/models.js';
+import type { CostTier, SearchType } from '../constants/models.js';
 
 // Performance API declarations for Node.js
 declare const performance: {
@@ -65,6 +65,8 @@ export interface ResponseMetadataOptions {
   timeout?: number;
   /** Cost tier classification */
   costTier?: CostTier;
+  /** Search type classification (realtime or training-data) */
+  searchType?: SearchType;
 }
 
 /**
@@ -316,6 +318,9 @@ export class ResponseOptimizer {
     }
     if (metadataOptions?.costTier !== undefined) {
       metadata.costTier = metadataOptions.costTier;
+    }
+    if (metadataOptions?.searchType !== undefined) {
+      metadata.searchType = metadataOptions.searchType;
     }
 
     return {

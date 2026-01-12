@@ -1,3 +1,4 @@
+import type { SearchType } from '../constants/models.js';
 import {
   ResponseOptimizer,
   formatResponseQuick,
@@ -40,6 +41,8 @@ export interface SearchMetadata {
   costTier?: 'standard' | 'premium';
   /** Effective timeout applied in milliseconds */
   timeout?: number;
+  /** Search type classification (realtime or training-data) */
+  searchType?: SearchType;
 }
 
 /**
