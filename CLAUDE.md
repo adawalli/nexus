@@ -28,9 +28,22 @@ npm run lint:fix         # Auto-fix issues
 npm run format           # Format with Prettier
 npm run type-check       # TypeScript validation
 
-# Pre-commit (run until all pass)
-pre-commit run --all-files
+# Pre-commit (run on staged files)
+pre-commit run
 ```
+
+### Validation Workflow
+
+**Before committing:**
+
+- Code style, linting, and security checks run automatically via pre-commit
+- Manual validation: `pre-commit run` (checks staged files only)
+
+**Before pushing:**
+
+- Full validation runs automatically via pre-push
+- Runs: `npm run release:validate` (lint, format, type-check, secrets, test)
+- Manual validation: `pre-commit run --hook-stage pre-push`
 
 ## Architecture
 
@@ -68,6 +81,23 @@ Client Request → STDIO Transport → MCP Server (src/index.ts)
 
 ## Pre-Commit Requirements
 
-- Run `pre-commit run --all-files` repeatedly until all checks pass before committing
+- Pre-commit hooks (fast checks) run automatically on every commit
+- Run `pre-commit run` before committing to ensure staged files pass linting
+- Pre-push hooks (full validation) run automatically before pushing
+- Pre-push runs `npm run release:validate` (lint, format, type-check, secrets, test)
 - Never use `git commit --no-verify` - fix issues instead
 - Secrets scanning via gitleaks is included in validation
+
+### Temporarily Skip Hooks
+
+**Skip pre-commit:**
+
+```bash
+SKIP=hook-id git commit -m "message"
+```
+
+**Skip pre-push:**
+
+```bash
+SKIP=hook-id git push
+```
