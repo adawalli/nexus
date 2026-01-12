@@ -25,12 +25,12 @@ _Intelligent AI model search and discovery with zero-install simplicity_
 
 ## What is Nexus?
 
-Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered web search functionality through the OpenRouter API. It integrates with MCP-compatible clients including Claude Desktop and Cursor, providing search capabilities via the Perplexity Sonar model family.
+Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered search functionality through the OpenRouter API. It integrates with MCP-compatible clients including Claude Desktop and Cursor, providing search capabilities via multiple model families including Perplexity Sonar (real-time web search) and Grok 4 (training-data knowledge).
 
 ### Key Characteristics
 
 - **Zero-install deployment**: Executable via `npx` with no build requirements
-- **OpenRouter integration**: Uses Perplexity Sonar models for web search with citations
+- **OpenRouter integration**: Multiple AI models including Perplexity Sonar (web search) and Grok 4 (training data)
 - **MCP protocol compliance**: Implements standard MCP tool and resource interfaces
 - **Production architecture**: Includes request caching, deduplication, retry logic, and error handling
 - **Type-safe implementation**: Full TypeScript coverage with strict type checking
@@ -46,10 +46,16 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered web 
 
 ### Search Capabilities
 
-- Perplexity Sonar model family integration
-- Real-time web search with current information
+- **Multiple model tiers** with different capabilities:
+  - `sonar` - Fast Q&A, real-time web search (30s timeout, standard tier)
+  - `sonar-pro` - Multi-step queries, real-time web search (60s timeout, premium tier)
+  - `sonar-reasoning-pro` - Chain-of-thought reasoning, real-time web search (120s timeout, premium tier)
+  - `sonar-deep-research` - Exhaustive research reports, real-time web search (300s timeout, premium tier)
+  - `grok-4` - Training-data knowledge, no real-time search (60s timeout, premium tier)
+- Real-time web search with current information (Perplexity models)
+- Training-data knowledge responses (Grok 4)
 - Structured citation extraction from responses
-- Configurable model parameters (temperature, max tokens, penalties)
+- Configurable model parameters (temperature, max tokens, timeout override)
 
 ### Architecture
 
@@ -211,25 +217,44 @@ Use the search tool to find information about "latest developments in AI"
 
 ```
 Search for "climate change solutions" using:
-- Model: perplexity/sonar
+- Model: sonar-pro
 - Max tokens: 2000
 - Temperature: 0.3
+```
+
+### Using Different Models
+
+```
+# Fast Q&A with real-time web search (default)
+Search for "latest news" with model: sonar
+
+# Deep research with comprehensive analysis
+Search for "AI safety research" with model: sonar-deep-research
+
+# Knowledge from training data (no web search)
+Search for "explain quantum computing" with model: grok-4
 ```
 
 ## Available Tools
 
 ### `search`
 
-The main search tool that provides AI-powered web search capabilities.
+The main search tool that provides AI-powered search capabilities.
 
 **Parameters:**
 
 - `query` (required): Search query (1-2000 characters)
-- `model` (optional): Perplexity model to use (default: "perplexity/sonar")
+- `model` (optional): Model to use (default: `sonar`)
+  - `sonar` - Fast Q&A with real-time web search (30s timeout)
+  - `sonar-pro` - Multi-step queries with real-time web search (60s timeout, premium)
+  - `sonar-reasoning-pro` - Chain-of-thought reasoning with real-time web search (120s timeout, premium)
+  - `sonar-deep-research` - Exhaustive research reports with real-time web search (300s timeout, premium)
+  - `grok-4` - Training-data knowledge, no real-time search (60s timeout, premium)
 - `maxTokens` (optional): Maximum response tokens (1-4000, default: 1000)
-- `temperature` (optional): Response randomness (0-2, default: 0.7)
+- `temperature` (optional): Response randomness (0-2, default: 0.3)
+- `timeout` (optional): Override default timeout in milliseconds (5000-600000)
 
-**Example Response:**
+**Example Response (Perplexity model):**
 
 ```
 Based on current information, here are the latest developments in AI...
@@ -241,7 +266,26 @@ Based on current information, here are the latest developments in AI...
 - Model: perplexity/sonar
 - Response time: 1250ms
 - Tokens used: 850
+- Timeout: 30000ms
+- Search type: realtime
 - Sources: 5 found
+```
+
+**Example Response (Grok 4 model):**
+
+```
+Quantum computing is a type of computation that harnesses quantum mechanics...
+
+[Response based on training data knowledge]
+
+---
+**Search Metadata:**
+- Model: x-ai/grok-4
+- Response time: 3500ms
+- Tokens used: 650
+- Timeout: 60000ms
+- Search type: training-data
+- Cost tier: premium
 ```
 
 ## Configuration
