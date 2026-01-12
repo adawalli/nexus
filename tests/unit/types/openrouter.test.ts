@@ -4,7 +4,7 @@ import type {
   ChatMessage,
   ChatCompletionRequest,
   OpenRouterError,
-  PerplexityModelId,
+  ModelId,
   ChatRole,
 } from '../../../src/types/openrouter';
 
@@ -73,11 +73,19 @@ describe('OpenRouter Types', () => {
     });
   });
 
-  describe('PerplexityModelId', () => {
-    it('should accept valid Perplexity model IDs', () => {
-      const model: PerplexityModelId = 'perplexity/sonar';
+  describe('ModelId', () => {
+    it('should accept all valid model IDs', () => {
+      const sonar: ModelId = 'perplexity/sonar';
+      const sonarPro: ModelId = 'perplexity/sonar-pro';
+      const sonarReasoningPro: ModelId = 'perplexity/sonar-reasoning-pro';
+      const sonarDeepResearch: ModelId = 'perplexity/sonar-deep-research';
+      const grok4: ModelId = 'x-ai/grok-4';
 
-      expect(model).toBe('perplexity/sonar');
+      expect(sonar).toBe('perplexity/sonar');
+      expect(sonarPro).toBe('perplexity/sonar-pro');
+      expect(sonarReasoningPro).toBe('perplexity/sonar-reasoning-pro');
+      expect(sonarDeepResearch).toBe('perplexity/sonar-deep-research');
+      expect(grok4).toBe('x-ai/grok-4');
     });
   });
 

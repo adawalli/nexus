@@ -1,6 +1,6 @@
 /**
  * TypeScript type definitions for OpenRouter API
- * Focused on chat completions endpoint and Perplexity Sonar models
+ * Focused on chat completions endpoint and supported models
  */
 
 export type ChatRole = 'user' | 'assistant' | 'system';
@@ -12,11 +12,12 @@ export type FinishReason =
   | 'tool_calls'
   | null;
 
-export type PerplexityModelId =
+export type ModelId =
   | 'perplexity/sonar'
   | 'perplexity/sonar-pro'
   | 'perplexity/sonar-reasoning-pro'
-  | 'perplexity/sonar-deep-research';
+  | 'perplexity/sonar-deep-research'
+  | 'x-ai/grok-4';
 
 export interface ChatMessage {
   role: ChatRole;

@@ -1,27 +1,29 @@
 import { describe, it, expect } from 'vitest';
 
 import {
-  PERPLEXITY_MODELS,
+  MODELS,
   MODEL_TIMEOUTS,
   MODEL_COST_TIERS,
+  MODEL_SEARCH_TYPES,
   type UserFriendlyModelName,
 } from '../../../src/constants/models';
 
 describe('Model Constants', () => {
-  describe('PERPLEXITY_MODELS', () => {
-    it('should map all four user-friendly model names to valid OpenRouter identifiers', () => {
-      expect(PERPLEXITY_MODELS.sonar).toBe('perplexity/sonar');
-      expect(PERPLEXITY_MODELS['sonar-pro']).toBe('perplexity/sonar-pro');
-      expect(PERPLEXITY_MODELS['sonar-reasoning-pro']).toBe(
+  describe('MODELS', () => {
+    it('should map user-friendly model names to valid OpenRouter identifiers', () => {
+      expect(MODELS.sonar).toBe('perplexity/sonar');
+      expect(MODELS['sonar-pro']).toBe('perplexity/sonar-pro');
+      expect(MODELS['sonar-reasoning-pro']).toBe(
         'perplexity/sonar-reasoning-pro'
       );
-      expect(PERPLEXITY_MODELS['sonar-deep-research']).toBe(
+      expect(MODELS['sonar-deep-research']).toBe(
         'perplexity/sonar-deep-research'
       );
+      expect(MODELS['grok-4']).toBe('x-ai/grok-4');
     });
 
-    it('should contain exactly four model mappings', () => {
-      expect(Object.keys(PERPLEXITY_MODELS)).toHaveLength(4);
+    it('should contain exactly five model mappings', () => {
+      expect(Object.keys(MODELS)).toHaveLength(5);
     });
   });
 
@@ -31,6 +33,7 @@ describe('Model Constants', () => {
       expect(MODEL_TIMEOUTS['sonar-pro']).toBe(60000);
       expect(MODEL_TIMEOUTS['sonar-reasoning-pro']).toBe(120000);
       expect(MODEL_TIMEOUTS['sonar-deep-research']).toBe(300000);
+      expect(MODEL_TIMEOUTS['grok-4']).toBe(60000);
     });
 
     it('should have all timeouts within valid bounds (5000ms min, 600000ms max)', () => {
@@ -44,27 +47,45 @@ describe('Model Constants', () => {
   });
 
   describe('MODEL_COST_TIERS', () => {
-    it('should classify sonar as standard tier', () => {
+    it('should classify models into correct cost tiers', () => {
       expect(MODEL_COST_TIERS.sonar).toBe('standard');
-    });
-
-    it('should classify premium models correctly', () => {
       expect(MODEL_COST_TIERS['sonar-pro']).toBe('premium');
       expect(MODEL_COST_TIERS['sonar-reasoning-pro']).toBe('premium');
       expect(MODEL_COST_TIERS['sonar-deep-research']).toBe('premium');
+      expect(MODEL_COST_TIERS['grok-4']).toBe('premium');
+    });
+  });
+
+  describe('MODEL_SEARCH_TYPES', () => {
+    it('should classify Perplexity models as realtime search', () => {
+      expect(MODEL_SEARCH_TYPES.sonar).toBe('realtime');
+      expect(MODEL_SEARCH_TYPES['sonar-pro']).toBe('realtime');
+      expect(MODEL_SEARCH_TYPES['sonar-reasoning-pro']).toBe('realtime');
+      expect(MODEL_SEARCH_TYPES['sonar-deep-research']).toBe('realtime');
+    });
+
+    it('should classify Grok 4 as training-data based search', () => {
+      expect(MODEL_SEARCH_TYPES['grok-4']).toBe('training-data');
+    });
+
+    it('should have entries for all models', () => {
+      const modelNames = Object.keys(MODELS);
+      const searchTypeNames = Object.keys(MODEL_SEARCH_TYPES);
+      expect(searchTypeNames.sort()).toEqual(modelNames.sort());
     });
   });
 
   describe('UserFriendlyModelName type', () => {
-    it('should accept valid model names at type level', () => {
+    it('should accept valid model names including grok-4 at type level', () => {
       const validNames: UserFriendlyModelName[] = [
         'sonar',
         'sonar-pro',
         'sonar-reasoning-pro',
         'sonar-deep-research',
+        'grok-4',
       ];
 
-      expect(validNames).toHaveLength(4);
+      expect(validNames).toHaveLength(5);
     });
   });
 });
