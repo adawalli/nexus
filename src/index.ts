@@ -102,6 +102,23 @@ const server = new Server(
       resources: {},
       tools: {},
     },
+    instructions: `AI-powered web search and knowledge retrieval via Perplexity Sonar and Grok models.
+
+MODEL SELECTION:
+- sonar: Fast Q&A, current web info (30s timeout)
+- sonar-pro: Multi-step research queries (60s timeout, premium)
+- sonar-reasoning-pro: Complex reasoning with citations (120s timeout, premium)
+- sonar-deep-research: Exhaustive multi-source reports (300s timeout, premium)
+- grok-4: Training data knowledge, no web search (60s timeout, premium)
+
+CONSTRAINTS:
+- Queries: 1-2000 chars
+- Response caching enabled (reduces API costs for repeat queries)
+- Concurrent identical requests automatically deduplicated
+- Premium models (sonar-pro+, grok-4) have higher API costs
+
+RESOURCES:
+- config://status: Server health and configuration info`,
   }
 );
 
