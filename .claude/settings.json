@@ -1,0 +1,45 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | { read fp; if echo \"$fp\" | grep -qE '\\.(ts|js|json|md|yaml|yml)$'; then npx prettier --write \"$fp\" >/dev/null 2>&1; fi; }"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // \"\"' | { read fp; if echo \"$fp\" | grep -qE '\\.(ts|js)$'; then npx eslint --fix \"$fp\" >/dev/null 2>&1 || npx eslint \"$fp\" 2>&1; fi; }"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && npm run type-check 2>&1 | tail -20"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | if grep -qE 'git\\s+commit.*--no-verify'; then echo 'Never use --no-verify with git commit.' >&2; exit 2; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
