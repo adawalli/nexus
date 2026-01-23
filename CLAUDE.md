@@ -9,11 +9,8 @@ Nexus MCP is a Model Context Protocol server providing AI-powered web search via
 ## Essential Commands
 
 ```bash
-# Development
 npm run dev              # Watch mode with type checking
 npm run build            # Production build
-
-# Testing
 npm test                 # Full test suite (unit + integration)
 npm run test:unit        # Unit tests only
 npm run test:watch       # Watch mode for development
@@ -21,29 +18,7 @@ npm run test:watch       # Watch mode for development
 # Single test execution
 npm test -- tests/unit/clients/openrouter.test.ts
 npm test -- --grep "OpenRouter"
-
-# Code quality
-npm run lint             # Check for issues
-npm run lint:fix         # Auto-fix issues
-npm run format           # Format with Prettier
-npm run type-check       # TypeScript validation
-
-# Pre-commit (run on staged files)
-pre-commit run
 ```
-
-### Validation Workflow
-
-**Before committing:**
-
-- Code style, linting, and security checks run automatically via pre-commit
-- Manual validation: `pre-commit run` (checks staged files only)
-
-**Before pushing:**
-
-- Full validation runs automatically via pre-push
-- Runs: `npm run release:validate` (lint, format, type-check, secrets, test)
-- Manual validation: `pre-commit run --hook-stage pre-push`
 
 ## Architecture
 
@@ -78,26 +53,3 @@ Client Request → STDIO Transport → MCP Server (src/index.ts)
 - `OPENROUTER_API_KEY` - Required for OpenRouter API access
 - `NODE_ENV` - Environment (development, production, test)
 - `LOG_LEVEL` - Logging verbosity (debug, info, warn, error)
-
-## Pre-Commit Requirements
-
-- Pre-commit hooks (fast checks) run automatically on every commit
-- Run `pre-commit run` before committing to ensure staged files pass linting
-- Pre-push hooks (full validation) run automatically before pushing
-- Pre-push runs `npm run release:validate` (lint, format, type-check, secrets, test)
-- Never use `git commit --no-verify` - fix issues instead
-- Secrets scanning via gitleaks is included in validation
-
-### Temporarily Skip Hooks
-
-**Skip pre-commit:**
-
-```bash
-SKIP=hook-id git commit -m "message"
-```
-
-**Skip pre-push:**
-
-```bash
-SKIP=hook-id git push
-```
