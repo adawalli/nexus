@@ -9,15 +9,15 @@ Nexus MCP is a Model Context Protocol server providing AI-powered web search via
 ## Essential Commands
 
 ```bash
-npm run dev              # Watch mode with type checking
-npm run build            # Production build
-npm test                 # Full test suite (unit + integration)
-npm run test:unit        # Unit tests only
-npm run test:watch       # Watch mode for development
+bun run dev              # Watch mode with type checking
+bun run build            # Production build
+bun run test             # Full test suite (unit + integration)
+bun run test:unit        # Unit tests only
+bun run test:watch       # Watch mode for development
 
 # Single test execution
-npm test -- tests/unit/clients/openrouter.test.ts
-npm test -- --grep "OpenRouter"
+bun run test -- tests/unit/clients/openrouter.test.ts
+bun run test -- --grep "OpenRouter"
 ```
 
 ## Architecture

@@ -131,3 +131,6 @@ temp/
 .idea
 .vscode
 # OS specific
+
+# npm (no longer used for development)
+package-lock.json

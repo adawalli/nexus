@@ -6,8 +6,8 @@ Thank you for your interest in contributing to Nexus! We welcome contributions f
 
 ### Prerequisites
 
-- Node.js 16+
-- npm or yarn
+- Bun (latest)
+- Node.js 18+ (for building dist/)
 - Git
 
 ### Development Setup
@@ -22,7 +22,7 @@ Thank you for your interest in contributing to Nexus! We welcome contributions f
 2. **Install dependencies**
 
    ```bash
-   npm install
+   bun install
    ```
 
 3. **Set up environment**
@@ -35,25 +35,25 @@ Thank you for your interest in contributing to Nexus! We welcome contributions f
 4. **Run the development server**
 
    ```bash
-   npm run dev
+   bun run dev
    ```
 
 5. **Run tests**
    ```bash
-   npm test
+   bun run test
    ```
 
 ## Development Workflow
 
 ### Scripts Available
 
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build for production
-- `npm test` - Run test suite
-- `npm run test:watch` - Run tests in watch mode
-- `npm run lint` - Check code quality
-- `npm run format` - Format code with Prettier
-- `npm run type-check` - TypeScript type checking
+- `bun run dev` - Start development server with hot reload
+- `bun run build` - Build for production
+- `bun run test` - Run test suite
+- `bun run test:watch` - Run tests in watch mode
+- `bun run lint` - Check code quality
+- `bun run format` - Format code with Prettier
+- `bun run type-check` - TypeScript type checking
 
 ### Code Quality
 
