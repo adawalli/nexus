@@ -114,13 +114,13 @@ cd nexus
 2. Install dependencies:
 
 ```bash
-npm install
+bun install
 ```
 
 3. Build the server:
 
 ```bash
-npm run build
+bun run build
 ```
 
 4. Configure your OpenRouter API key:
@@ -136,7 +136,7 @@ cp .env.example .env
 5. Test the server:
 
 ```bash
-npm start
+bun run start
 ```
 
 ## Integration with MCP Clients
@@ -395,19 +395,19 @@ For developers working on this server:
 
 ```bash
 # Development with hot reload
-npm run dev
+bun run dev
 
 # Run tests
-npm test
+bun run test
 
 # Run tests with coverage
-npm run test:coverage
+bun run test:coverage
 
 # Lint code
-npm run lint
+bun run lint
 
 # Format code
-npm run format
+bun run format
 ```
 
 ## API Costs
