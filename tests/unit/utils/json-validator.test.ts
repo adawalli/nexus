@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
 import {
   JSONValidator,
@@ -6,23 +6,21 @@ import {
   validateJSON,
 } from '../../../src/utils/json-validator.js';
 
-vi.mock('../../../src/utils/logger.js', () => ({
+mock.module('../../../src/utils/logger.js', () => ({
   logger: {
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    jsonSerialization: vi.fn(),
-    responseValidation: vi.fn(),
-    jsonRpc: vi.fn(),
-    mcpProtocol: vi.fn(),
+    warn: mock(() => {}),
+    error: mock(() => {}),
+    debug: mock(() => {}),
+    info: mock(() => {}),
+    jsonSerialization: mock(() => {}),
+    responseValidation: mock(() => {}),
+    jsonRpc: mock(() => {}),
+    mcpProtocol: mock(() => {}),
   },
 }));
 
 describe('JSONValidator', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeEach(() => {});
 
   describe('safeStringify', () => {
     it('should stringify simple objects correctly', () => {

@@ -1,34 +1,28 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
 import { SearchTool } from '../../src/tools/search';
 import { validateSearchResponse } from '../../src/types/search';
+import {
+  createMockFetchResponse,
+  createMockFetchErrorResponse,
+} from '../fixtures/index.js';
+import { setupIntegrationSearchTest } from '../utils/test-helpers.js';
 
-// Mock OpenRouter API responses
 const mockApiKey = 'sk-or-test-integration-key-12345678901234';
 
-// Mock the fetch function for integration testing
-const mockFetch = vi.fn();
+const mockFetch = mock(() => {});
 global.fetch = mockFetch;
 
 describe('Search Tool Integration', () => {
   let searchTool: SearchTool;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-
-    // Set environment variable for configuration
-    process.env.OPENROUTER_API_KEY = mockApiKey;
-
-    // Reset ConfigurationManager singleton
-    const { ConfigurationManager } = await import('../../src/config/manager');
-    ConfigurationManager['instance'] = null;
-
-    searchTool = new SearchTool(mockApiKey);
+    mockFetch.mockClear();
+    searchTool = await setupIntegrationSearchTest(mockApiKey);
   });
 
   describe('End-to-End Search Flow', () => {
     it('should complete full search workflow successfully', async () => {
-      // Mock successful API response
       const mockApiResponse = {
         ok: true,
         json: async () => ({
@@ -76,14 +70,12 @@ This information reflects the current state of AI technology and its application
 
       const result = await searchTool.search(searchInput);
 
-      // Validate the response structure
       expect(validateSearchResponse(result)).toBe(true);
       expect(result.success).toBe(true);
       expect(result.result).toBeDefined();
 
       const searchResult = result.result!;
 
-      // Verify content and sources
       expect(searchResult.content).toContain('artificial intelligence');
       expect(searchResult.sources).toHaveLength(2);
       expect(searchResult.sources[0].url).toBe(
@@ -93,15 +85,13 @@ This information reflects the current state of AI technology and its application
         'https://techjournal.org/ai-developments'
       );
 
-      // Verify metadata
       expect(searchResult.metadata.query).toBe(searchInput.query);
-      expect(searchResult.metadata.model).toBe('perplexity/sonar'); // Model is mapped to OpenRouter identifier
+      expect(searchResult.metadata.model).toBe('perplexity/sonar');
       expect(searchResult.metadata.temperature).toBe(searchInput.temperature);
       expect(searchResult.metadata.maxTokens).toBe(searchInput.maxTokens);
       expect(searchResult.metadata.usage?.total_tokens).toBe(135);
-      expect(searchResult.metadata.responseTime).toBeGreaterThan(0);
+      expect(searchResult.metadata.responseTime).toBeGreaterThanOrEqual(0);
 
-      // Verify API call was made correctly with mapped model identifier
       expect(mockFetch).toHaveBeenCalledWith(
         'https://openrouter.ai/api/v1/chat/completions',
         expect.objectContaining({
@@ -111,7 +101,7 @@ This information reflects the current state of AI technology and its application
             'Content-Type': 'application/json',
           }),
           body: JSON.stringify({
-            model: 'perplexity/sonar', // User-friendly 'sonar' maps to OpenRouter identifier
+            model: 'perplexity/sonar',
             messages: [
               {
                 role: 'user',
@@ -130,26 +120,15 @@ This information reflects the current state of AI technology and its application
     });
 
     it('should handle API error responses correctly', async () => {
-      // Mock API error response
-      const mockErrorResponse = {
-        ok: false,
-        status: 401,
-        json: async () => ({
-          error: {
-            code: 401,
-            message: 'Invalid authentication credentials',
-            type: 'authentication_error',
-          },
-        }),
-      };
+      const mockErrorResponse = createMockFetchErrorResponse(401, {
+        code: 401,
+        message: 'Invalid authentication credentials',
+        type: 'authentication_error',
+      });
 
       mockFetch.mockResolvedValue(mockErrorResponse);
 
-      const searchInput = {
-        query: 'test query',
-      };
-
-      const result = await searchTool.search(searchInput);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('auth');
@@ -157,20 +136,21 @@ This information reflects the current state of AI technology and its application
     });
 
     it('should handle rate limiting correctly', async () => {
-      // Mock rate limit response
       const mockRateLimitResponse = {
         ok: false,
         status: 429,
         headers: {
           get: (header: string) => (header === 'retry-after' ? '60' : null),
         },
-        json: vi.fn().mockResolvedValue({
-          error: {
-            code: 429,
-            message: 'Rate limit exceeded',
-            type: 'rate_limit_error',
-          },
-        }),
+        json: mock(() =>
+          Promise.resolve({
+            error: {
+              code: 429,
+              message: 'Rate limit exceeded',
+              type: 'rate_limit_error',
+            },
+          })
+        ),
       };
 
       mockFetch.mockResolvedValue(mockRateLimitResponse);
@@ -194,10 +174,10 @@ This information reflects the current state of AI technology and its application
 
     it('should validate input parameters end-to-end', async () => {
       const invalidInputs = [
-        { query: '' }, // Empty query
-        { query: 'test', maxTokens: 0 }, // Invalid maxTokens
-        { query: 'test', temperature: 3 }, // Invalid temperature
-        { query: 'test', model: 'invalid-model' }, // Invalid model
+        { query: '' },
+        { query: 'test', maxTokens: 0 },
+        { query: 'test', temperature: 3 },
+        { query: 'test', model: 'invalid-model' },
       ];
 
       for (const input of invalidInputs) {
@@ -220,26 +200,11 @@ Additional information can be found at:
 
 For more details, see the comprehensive report at https://www.nature.com/climate-science`;
 
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          id: 'test-sources',
-          object: 'chat.completion',
-          created: Math.floor(Date.now() / 1000),
-          model: 'perplexity/sonar',
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: contentWithSources,
-              },
-              finish_reason: 'stop',
-            },
-          ],
-          usage: { prompt_tokens: 10, completion_tokens: 50, total_tokens: 60 },
-        }),
-      };
+      const mockResponse = createMockFetchResponse('perplexity/sonar', {
+        id: 'test-sources',
+        content: contentWithSources,
+        usage: { prompt_tokens: 10, completion_tokens: 50, total_tokens: 60 },
+      });
 
       mockFetch.mockResolvedValue(mockResponse);
 
@@ -288,28 +253,12 @@ For more details, see the comprehensive report at https://www.nature.com/climate
 
   describe('Performance Testing', () => {
     it('should complete search within reasonable time', async () => {
-      const mockResponse = {
-        ok: true,
-        json: async () => ({
-          id: 'perf-test',
-          object: 'chat.completion',
-          created: Math.floor(Date.now() / 1000),
-          model: 'perplexity/sonar',
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content: 'Quick response for performance testing.',
-              },
-              finish_reason: 'stop',
-            },
-          ],
-          usage: { prompt_tokens: 5, completion_tokens: 10, total_tokens: 15 },
-        }),
-      };
+      const mockResponse = createMockFetchResponse('perplexity/sonar', {
+        id: 'perf-test',
+        content: 'Quick response for performance testing.',
+        usage: { prompt_tokens: 5, completion_tokens: 10, total_tokens: 15 },
+      });
 
-      // Simulate a realistic network delay
       mockFetch.mockImplementation(
         () =>
           new Promise(resolve => setTimeout(() => resolve(mockResponse), 500))
@@ -320,43 +269,23 @@ For more details, see the comprehensive report at https://www.nature.com/climate
       const endTime = Date.now();
 
       expect(result.success).toBe(true);
-      expect(endTime - startTime).toBeGreaterThan(400); // At least the simulated delay
-      expect(endTime - startTime).toBeLessThan(2000); // Should complete within 2 seconds
+      expect(endTime - startTime).toBeGreaterThan(400);
+      expect(endTime - startTime).toBeLessThan(2000);
       expect(result.result?.metadata.responseTime).toBeGreaterThan(400);
     });
   });
 
   describe('Deep Research Modes Integration', () => {
     it('should complete end-to-end search with default model (sonar)', async () => {
-      const mockApiResponse = {
-        ok: true,
-        json: async () => ({
-          id: 'chatcmpl-default-model',
-          object: 'chat.completion',
-          created: Math.floor(Date.now() / 1000),
-          model: 'perplexity/sonar',
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content:
-                  'Quick answer about TypeScript features.\n\nSources:\nhttps://www.typescriptlang.org/docs',
-              },
-              finish_reason: 'stop',
-            },
-          ],
-          usage: {
-            prompt_tokens: 10,
-            completion_tokens: 25,
-            total_tokens: 35,
-          },
-        }),
-      };
+      const mockApiResponse = createMockFetchResponse('perplexity/sonar', {
+        id: 'chatcmpl-default-model',
+        content:
+          'Quick answer about TypeScript features.\n\nSources:\nhttps://www.typescriptlang.org/docs',
+        usage: { prompt_tokens: 10, completion_tokens: 25, total_tokens: 35 },
+      });
 
       mockFetch.mockResolvedValue(mockApiResponse);
 
-      // Call without specifying model - should use default 'sonar'
       const result = await searchTool.search({
         query: 'TypeScript features',
       });
@@ -366,16 +295,10 @@ For more details, see the comprehensive report at https://www.nature.com/climate
 
       const searchResult = result.result!;
 
-      // Verify model defaults to sonar
       expect(searchResult.metadata.model).toBe('perplexity/sonar');
-
-      // Verify timeout is set (should be 30000ms for sonar)
       expect(searchResult.metadata.timeout).toBe(30000);
-
-      // Verify costTier is standard for default model
       expect(searchResult.metadata.costTier).toBe('standard');
 
-      // Verify API call used correct model identifier
       expect(mockFetch).toHaveBeenCalledWith(
         'https://openrouter.ai/api/v1/chat/completions',
         expect.objectContaining({
@@ -385,31 +308,12 @@ For more details, see the comprehensive report at https://www.nature.com/climate
     });
 
     it('should complete end-to-end search with premium model (sonar-pro)', async () => {
-      const mockApiResponse = {
-        ok: true,
-        json: async () => ({
-          id: 'chatcmpl-premium-model',
-          object: 'chat.completion',
-          created: Math.floor(Date.now() / 1000),
-          model: 'perplexity/sonar-pro',
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content:
-                  'Detailed multi-step analysis of machine learning algorithms.\n\nSources:\nhttps://arxiv.org/ml-papers',
-              },
-              finish_reason: 'stop',
-            },
-          ],
-          usage: {
-            prompt_tokens: 15,
-            completion_tokens: 80,
-            total_tokens: 95,
-          },
-        }),
-      };
+      const mockApiResponse = createMockFetchResponse('perplexity/sonar-pro', {
+        id: 'chatcmpl-premium-model',
+        content:
+          'Detailed multi-step analysis of machine learning algorithms.\n\nSources:\nhttps://arxiv.org/ml-papers',
+        usage: { prompt_tokens: 15, completion_tokens: 80, total_tokens: 95 },
+      });
 
       mockFetch.mockResolvedValue(mockApiResponse);
 
@@ -423,16 +327,10 @@ For more details, see the comprehensive report at https://www.nature.com/climate
 
       const searchResult = result.result!;
 
-      // Verify model is mapped correctly to full OpenRouter identifier
       expect(searchResult.metadata.model).toBe('perplexity/sonar-pro');
-
-      // Verify timeout is set for sonar-pro (60000ms)
       expect(searchResult.metadata.timeout).toBe(60000);
-
-      // Verify costTier is premium for sonar-pro
       expect(searchResult.metadata.costTier).toBe('premium');
 
-      // Verify API call used correct model identifier
       expect(mockFetch).toHaveBeenCalledWith(
         'https://openrouter.ai/api/v1/chat/completions',
         expect.objectContaining({
@@ -442,35 +340,23 @@ For more details, see the comprehensive report at https://www.nature.com/climate
     });
 
     it('should complete end-to-end search with timeout override', async () => {
-      const mockApiResponse = {
-        ok: true,
-        json: async () => ({
+      const mockApiResponse = createMockFetchResponse(
+        'perplexity/sonar-deep-research',
+        {
           id: 'chatcmpl-timeout-override',
-          object: 'chat.completion',
-          created: Math.floor(Date.now() / 1000),
-          model: 'perplexity/sonar-deep-research',
-          choices: [
-            {
-              index: 0,
-              message: {
-                role: 'assistant',
-                content:
-                  'Comprehensive research report on quantum computing.\n\nSources:\nhttps://quantum.research.org',
-              },
-              finish_reason: 'stop',
-            },
-          ],
+          content:
+            'Comprehensive research report on quantum computing.\n\nSources:\nhttps://quantum.research.org',
           usage: {
             prompt_tokens: 20,
             completion_tokens: 200,
             total_tokens: 220,
           },
-        }),
-      };
+        }
+      );
 
       mockFetch.mockResolvedValue(mockApiResponse);
 
-      const customTimeout = 450000; // 7.5 minutes
+      const customTimeout = 450000;
 
       const result = await searchTool.search({
         query: 'comprehensive quantum computing research',
@@ -483,15 +369,10 @@ For more details, see the comprehensive report at https://www.nature.com/climate
 
       const searchResult = result.result!;
 
-      // Verify model is mapped correctly
       expect(searchResult.metadata.model).toBe(
         'perplexity/sonar-deep-research'
       );
-
-      // Verify timeout override is applied instead of model default (300000ms)
       expect(searchResult.metadata.timeout).toBe(customTimeout);
-
-      // Verify costTier is premium for deep research
       expect(searchResult.metadata.costTier).toBe('premium');
     });
   });

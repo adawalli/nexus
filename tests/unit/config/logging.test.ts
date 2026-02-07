@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, mock } from 'bun:test';
 import type { Logger } from 'winston';
 
 import {
@@ -236,7 +236,7 @@ describe('Secure Logging', () => {
     it('should sanitize arguments before logging', () => {
       // Create a mock Winston logger
       const mockLogger = {
-        info: vi.fn(),
+        info: mock(() => {}),
       } as unknown as Logger;
 
       const logger = new SecureLogger({}, mockLogger);
@@ -253,7 +253,7 @@ describe('Secure Logging', () => {
     });
 
     it('should handle error objects', () => {
-      const mockError = vi.fn();
+      const mockError = mock(() => {});
       const mockLogger = {
         error: mockError,
       } as unknown as Logger;
@@ -279,11 +279,11 @@ describe('Secure Logging', () => {
 
     it('should support all log levels', () => {
       const mockLogger = {
-        error: vi.fn(),
-        warn: vi.fn(),
-        info: vi.fn(),
-        debug: vi.fn(),
-        verbose: vi.fn(),
+        error: mock(() => {}),
+        warn: mock(() => {}),
+        info: mock(() => {}),
+        debug: mock(() => {}),
+        verbose: mock(() => {}),
       } as unknown as Logger;
 
       const logger = new SecureLogger({}, mockLogger);
@@ -320,7 +320,7 @@ describe('Secure Logging', () => {
 
     it('should use custom options', () => {
       const mockLogger = {
-        info: vi.fn(),
+        info: mock(() => {}),
       } as unknown as Logger;
 
       const logger = new SecureLogger(

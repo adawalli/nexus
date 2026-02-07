@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
 import {
   generateCorrelationId,
@@ -145,22 +145,22 @@ describe('createLogger', () => {
 
   it('should accept custom transports', () => {
     const customTransport = {
-      log: vi.fn(),
-      on: vi.fn(),
-      once: vi.fn(),
-      emit: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      removeAllListeners: vi.fn(),
-      listeners: vi.fn(),
-      rawListeners: vi.fn(),
-      listenerCount: vi.fn(),
-      prependListener: vi.fn(),
-      prependOnceListener: vi.fn(),
-      eventNames: vi.fn(),
-      setMaxListeners: vi.fn(),
-      getMaxListeners: vi.fn(),
-      off: vi.fn(),
+      log: mock(() => {}),
+      on: mock(() => {}),
+      once: mock(() => {}),
+      emit: mock(() => {}),
+      addListener: mock(() => {}),
+      removeListener: mock(() => {}),
+      removeAllListeners: mock(() => {}),
+      listeners: mock(() => {}),
+      rawListeners: mock(() => {}),
+      listenerCount: mock(() => {}),
+      prependListener: mock(() => {}),
+      prependOnceListener: mock(() => {}),
+      eventNames: mock(() => {}),
+      setMaxListeners: mock(() => {}),
+      getMaxListeners: mock(() => {}),
+      off: mock(() => {}),
     } as any;
 
     const logger = createLogger({
@@ -469,11 +469,11 @@ describe('createLoggingMiddleware', () => {
       url: '/test',
     };
     const res = {
-      setHeader: vi.fn(),
+      setHeader: mock(() => {}),
       statusCode: 200,
-      end: vi.fn(),
+      end: mock(() => {}),
     };
-    const next = vi.fn();
+    const next = mock(() => {});
 
     middleware(req, res, next);
 
@@ -488,11 +488,11 @@ describe('createLoggingMiddleware', () => {
       url: '/test',
     };
     const res = {
-      setHeader: vi.fn(),
+      setHeader: mock(() => {}),
       statusCode: 200,
-      end: vi.fn(),
+      end: mock(() => {}),
     };
-    const next = vi.fn();
+    const next = mock(() => {});
 
     middleware(req, res, next);
 
@@ -510,11 +510,11 @@ describe('createLoggingMiddleware', () => {
       url: '/test',
     };
     const res = {
-      setHeader: vi.fn(),
+      setHeader: mock(() => {}),
       statusCode: 200,
-      end: vi.fn(),
+      end: mock(() => {}),
     };
-    const next = vi.fn();
+    const next = mock(() => {});
 
     middleware(req, res, next);
 
@@ -531,13 +531,13 @@ describe('createLoggingMiddleware', () => {
       method: 'GET',
       url: '/test',
     };
-    const originalEnd = vi.fn();
+    const originalEnd = mock(() => {});
     const res = {
-      setHeader: vi.fn(),
+      setHeader: mock(() => {}),
       statusCode: 200,
       end: originalEnd,
     };
-    const next = vi.fn();
+    const next = mock(() => {});
 
     middleware(req, res, next);
 

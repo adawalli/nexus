@@ -1,4 +1,14 @@
-import { describe, it, expect, beforeEach, vi, type MockedClass } from 'vitest';
+/* eslint-disable import/order -- mock.module must precede mocked module imports */
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import {
+  openRouterMockFactory,
+  winstonMockFactory,
+  createMockApiResponse,
+  TEST_API_KEY,
+} from '../../fixtures/index.js';
+
+mock.module('../../../src/clients/openrouter', openRouterMockFactory);
+mock.module('winston', winstonMockFactory);
 
 import {
   SearchTool,
@@ -6,109 +16,28 @@ import {
   performSearch,
 } from '../../../src/tools/search';
 import type { ChatCompletionResponse } from '../../../src/types/openrouter';
-
-// Mock the OpenRouter client
-vi.mock('../../../src/clients/openrouter', () => {
-  const mockClient = {
-    chatCompletions: vi.fn(),
-    testConnection: vi.fn(),
-    getHeaders: vi.fn(),
-  };
-
-  return {
-    OpenRouterClient: vi.fn(() => mockClient),
-    OpenRouterApiError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number,
-        public type: string,
-        public code: number
-      ) {
-        super(message);
-      }
-    },
-    AuthenticationError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number = 401,
-        public code: number = 401
-      ) {
-        super(message);
-      }
-    },
-    RateLimitError: class extends Error {
-      constructor(
-        message: string,
-        public retryAfter?: number,
-        public statusCode: number = 429,
-        public code: number = 429
-      ) {
-        super(message);
-        this.retryAfter = retryAfter;
-      }
-    },
-    ServerError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number,
-        public code: number
-      ) {
-        super(message);
-      }
-    },
-  };
-});
-
-vi.mock('winston', () => ({
-  default: {
-    createLogger: () => ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    }),
-    format: {
-      combine: vi.fn(() => ({})),
-      timestamp: vi.fn(),
-      errors: vi.fn(),
-      json: vi.fn(),
-      colorize: vi.fn(),
-      simple: vi.fn(),
-    },
-    transports: {
-      Console: vi.fn(),
-    },
-  },
-}));
+import {
+  setupSearchToolTest,
+  type MockOpenRouterClient,
+} from '../../utils/test-helpers.js';
 
 describe('SearchTool', () => {
-  const mockApiKey = 'sk-or-test-api-key-12345678901234';
   let searchTool: SearchTool;
-  let mockClient: {
-    chatCompletions: ReturnType<typeof vi.fn>;
-    testConnection: ReturnType<typeof vi.fn>;
-    getHeaders: ReturnType<typeof vi.fn>;
-  };
+  let mockClient: MockOpenRouterClient;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-
-    process.env.OPENROUTER_API_KEY = mockApiKey;
-
-    const { ConfigurationManager } =
-      await import('../../../src/config/manager');
-    ConfigurationManager['instance'] = null;
-
-    searchTool = new SearchTool(mockApiKey);
-
-    const openRouterModule = await import('../../../src/clients/openrouter');
-    const MockClient =
-      openRouterModule.OpenRouterClient as unknown as MockedClass<
-        typeof openRouterModule.OpenRouterClient
-      >;
-    mockClient =
-      MockClient.mock.results[MockClient.mock.results.length - 1].value;
+    const setup = await setupSearchToolTest(TEST_API_KEY);
+    searchTool = setup.searchTool;
+    mockClient = setup.mockClient;
   });
+
+  const mockApiResponse: ChatCompletionResponse = createMockApiResponse(
+    'perplexity/sonar',
+    {
+      id: 'test-123',
+      content: 'This is a test response with source https://example.com',
+    }
+  );
 
   describe('constructor', () => {
     it('should create SearchTool with API key', () => {
@@ -118,11 +47,9 @@ describe('SearchTool', () => {
     it('should initialize OpenRouter client with correct config', async () => {
       const openRouterModule = await import('../../../src/clients/openrouter');
       const MockClient =
-        openRouterModule.OpenRouterClient as unknown as MockedClass<
-          typeof openRouterModule.OpenRouterClient
-        >;
+        openRouterModule.OpenRouterClient as unknown as ReturnType<typeof mock>;
       expect(MockClient).toHaveBeenCalledWith({
-        apiKey: mockApiKey,
+        apiKey: TEST_API_KEY,
         userAgent: 'nexus-mcp/1.0.0',
         timeout: 30000,
         maxRetries: 3,
@@ -131,34 +58,12 @@ describe('SearchTool', () => {
   });
 
   describe('search', () => {
-    const mockApiResponse: ChatCompletionResponse = {
-      id: 'test-123',
-      object: 'chat.completion',
-      created: 1640995200,
-      model: 'perplexity/sonar',
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content: 'This is a test response with source https://example.com',
-          },
-          finish_reason: 'stop',
-        },
-      ],
-      usage: {
-        prompt_tokens: 10,
-        completion_tokens: 20,
-        total_tokens: 30,
-      },
-    };
-
     it('should perform successful search with valid input', async () => {
       mockClient.chatCompletions.mockResolvedValue(mockApiResponse);
 
       const input = {
         query: 'test query',
-        model: 'sonar' as const, // Use user-friendly model name
+        model: 'sonar' as const,
         maxTokens: 1000,
         temperature: 0.3,
       };
@@ -194,7 +99,7 @@ describe('SearchTool', () => {
     });
 
     it('should handle validation errors', async () => {
-      const input = { query: '' }; // Invalid empty query
+      const input = { query: '' };
 
       const result = await searchTool.search(input);
 
@@ -209,8 +114,7 @@ describe('SearchTool', () => {
         new openRouterModule.AuthenticationError('Invalid API key')
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('auth');
@@ -223,8 +127,7 @@ describe('SearchTool', () => {
         new openRouterModule.RateLimitError('Rate limited', 60)
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('rate_limit');
@@ -237,8 +140,7 @@ describe('SearchTool', () => {
         new openRouterModule.ServerError('Internal server error', 500, 500)
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('api');
@@ -256,8 +158,7 @@ describe('SearchTool', () => {
         )
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('api');
@@ -269,8 +170,7 @@ describe('SearchTool', () => {
         new Error('Request timeout after 30000ms')
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('timeout');
@@ -282,8 +182,7 @@ describe('SearchTool', () => {
         new Error('Network error: Connection failed')
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('network');
@@ -293,8 +192,7 @@ describe('SearchTool', () => {
     it('should handle unknown errors', async () => {
       mockClient.chatCompletions.mockRejectedValue(new Error('Unknown error'));
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(false);
       expect(result.errorType).toBe('unknown');
@@ -317,8 +215,7 @@ describe('SearchTool', () => {
           )
       );
 
-      const input = { query: 'test query' };
-      const result = await searchTool.search(input);
+      const result = await searchTool.search({ query: 'test query' });
 
       expect(result.success).toBe(true);
       expect(result.result?.metadata.responseTime).toBeGreaterThan(90);
@@ -332,7 +229,6 @@ describe('SearchTool', () => {
 
       const input = { query: 'concurrent test query' };
 
-      // Start multiple identical requests concurrently
       const promises = [
         searchTool.search(input),
         searchTool.search(input),
@@ -341,17 +237,14 @@ describe('SearchTool', () => {
 
       const results = await Promise.all(promises);
 
-      // All should succeed and have the same result
       expect(results[0].success).toBe(true);
       expect(results[1].success).toBe(true);
       expect(results[2].success).toBe(true);
       expect(results[0].requestId).toBe(results[1].requestId);
       expect(results[0].requestId).toBe(results[2].requestId);
 
-      // But the API should only be called once due to deduplication
       expect(mockClient.chatCompletions).toHaveBeenCalledTimes(1);
 
-      // Check deduplication stats
       const stats = searchTool.getDeduplicationStats();
       expect(stats.uniqueRequests).toBe(1);
       expect(stats.deduplicatedRequests).toBe(2);
@@ -430,27 +323,15 @@ describe('SearchTool', () => {
   });
 
   describe('getPerformanceMetrics', () => {
-    const testApiResponse = {
+    const metricsApiResponse = createMockApiResponse('perplexity/sonar', {
       id: 'metrics-test-123',
-      object: 'chat.completion' as const,
-      created: 1640995200,
-      model: 'perplexity/sonar',
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant' as const,
-            content: 'Test response for metrics with https://example.com',
-          },
-          finish_reason: 'stop' as const,
-        },
-      ],
+      content: 'Test response for metrics with https://example.com',
       usage: {
         prompt_tokens: 10,
         completion_tokens: 15,
         total_tokens: 25,
       },
-    };
+    });
 
     it('should return performance metrics', () => {
       const metrics = searchTool.getPerformanceMetrics();
@@ -467,10 +348,9 @@ describe('SearchTool', () => {
     });
 
     it('should track metrics after search operations', async () => {
-      mockClient.chatCompletions.mockResolvedValue(testApiResponse);
+      mockClient.chatCompletions.mockResolvedValue(metricsApiResponse);
 
-      const input = { query: 'test query for metrics' };
-      await searchTool.search(input);
+      await searchTool.search({ query: 'test query for metrics' });
 
       const metrics = searchTool.getPerformanceMetrics();
 
@@ -482,7 +362,7 @@ describe('SearchTool', () => {
     });
 
     it('should clear performance metrics', async () => {
-      mockClient.chatCompletions.mockResolvedValue(testApiResponse);
+      mockClient.chatCompletions.mockResolvedValue(metricsApiResponse);
 
       await searchTool.search({ query: 'test query' });
 
@@ -501,44 +381,31 @@ describe('SearchTool', () => {
 describe('Factory Functions', () => {
   describe('createSearchTool', () => {
     it('should create SearchTool instance', () => {
-      const searchTool = createSearchTool('test-api-key');
-      expect(searchTool).toBeInstanceOf(SearchTool);
+      const tool = createSearchTool('test-api-key');
+      expect(tool).toBeInstanceOf(SearchTool);
     });
   });
 
   describe('performSearch', () => {
     it('should perform search with factory function', async () => {
       const openRouterModule = await import('../../../src/clients/openrouter');
-      const MockClient =
-        openRouterModule.OpenRouterClient as unknown as MockedClass<
-          typeof openRouterModule.OpenRouterClient
-        >;
-      const mockClient =
+      const MockClient = openRouterModule.OpenRouterClient as unknown as {
+        mock: { results: Array<{ value: any }> };
+      };
+      const mockClientInstance =
         MockClient.mock.results[MockClient.mock.results.length - 1].value;
 
-      const mockResponse: ChatCompletionResponse = {
+      const mockResponse = createMockApiResponse('perplexity/sonar', {
         id: 'test-123',
-        object: 'chat.completion',
-        created: 1640995200,
-        model: 'perplexity/sonar',
-        choices: [
-          {
-            index: 0,
-            message: {
-              role: 'assistant',
-              content: 'Test response',
-            },
-            finish_reason: 'stop',
-          },
-        ],
+        content: 'Test response',
         usage: {
           prompt_tokens: 5,
           completion_tokens: 10,
           total_tokens: 15,
         },
-      };
+      });
 
-      mockClient.chatCompletions.mockResolvedValue(mockResponse);
+      mockClientInstance.chatCompletions.mockResolvedValue(mockResponse);
 
       const result = await performSearch('test query', 'test-api-key', {
         temperature: 0.5,

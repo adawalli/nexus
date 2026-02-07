@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  setSystemTime,
+} from 'bun:test';
 
 import {
   TTLCache,
@@ -8,9 +15,11 @@ import {
 
 describe('TTLCache', () => {
   let cache: TTLCache<string>;
+  let now: number;
 
   beforeEach(() => {
-    vi.useFakeTimers();
+    now = Date.now();
+    setSystemTime(new Date(now));
     cache = new TTLCache<string>({
       defaultTtl: 1000,
       maxSize: 5,
@@ -20,7 +29,7 @@ describe('TTLCache', () => {
 
   afterEach(() => {
     cache.destroy();
-    vi.useRealTimers();
+    setSystemTime();
   });
 
   describe('get', () => {
@@ -41,7 +50,8 @@ describe('TTLCache', () => {
     it('should return undefined for expired entry', () => {
       cache.set('key1', 'value1', 100);
 
-      vi.advanceTimersByTime(101);
+      now += 101;
+      setSystemTime(new Date(now));
 
       const result = cache.get('key1');
 
@@ -51,7 +61,8 @@ describe('TTLCache', () => {
     it('should delete expired entry on access', () => {
       cache.set('key1', 'value1', 100);
 
-      vi.advanceTimersByTime(101);
+      now += 101;
+      setSystemTime(new Date(now));
       cache.get('key1');
 
       expect(cache.size()).toBe(0);
@@ -70,7 +81,8 @@ describe('TTLCache', () => {
     it('should increment misses counter for missing/expired entries', () => {
       cache.get('nonexistent');
       cache.set('key1', 'value1', 100);
-      vi.advanceTimersByTime(101);
+      now += 101;
+      setSystemTime(new Date(now));
       cache.get('key1');
 
       const stats = cache.getStats();
@@ -89,10 +101,12 @@ describe('TTLCache', () => {
     it('should store value with custom TTL', () => {
       cache.set('key1', 'value1', 500);
 
-      vi.advanceTimersByTime(400);
+      now += 400;
+      setSystemTime(new Date(now));
       expect(cache.get('key1')).toBe('value1');
 
-      vi.advanceTimersByTime(200);
+      now += 200;
+      setSystemTime(new Date(now));
       expect(cache.get('key1')).toBeUndefined();
     });
 
@@ -106,15 +120,20 @@ describe('TTLCache', () => {
 
     it('should evict oldest entry when max size is reached', () => {
       cache.set('key1', 'value1');
-      vi.advanceTimersByTime(10);
+      now += 10;
+      setSystemTime(new Date(now));
       cache.set('key2', 'value2');
-      vi.advanceTimersByTime(10);
+      now += 10;
+      setSystemTime(new Date(now));
       cache.set('key3', 'value3');
-      vi.advanceTimersByTime(10);
+      now += 10;
+      setSystemTime(new Date(now));
       cache.set('key4', 'value4');
-      vi.advanceTimersByTime(10);
+      now += 10;
+      setSystemTime(new Date(now));
       cache.set('key5', 'value5');
-      vi.advanceTimersByTime(10);
+      now += 10;
+      setSystemTime(new Date(now));
 
       // This should evict key1 (oldest)
       cache.set('key6', 'value6');
@@ -153,7 +172,8 @@ describe('TTLCache', () => {
     it('should return false for expired key', () => {
       cache.set('key1', 'value1', 100);
 
-      vi.advanceTimersByTime(101);
+      now += 101;
+      setSystemTime(new Date(now));
 
       expect(cache.has('key1')).toBe(false);
     });
@@ -161,7 +181,8 @@ describe('TTLCache', () => {
     it('should delete expired entry when checking', () => {
       cache.set('key1', 'value1', 100);
 
-      vi.advanceTimersByTime(101);
+      now += 101;
+      setSystemTime(new Date(now));
       cache.has('key1');
 
       expect(cache.size()).toBe(0);
@@ -270,7 +291,8 @@ describe('TTLCache', () => {
       cache.set('key2', 'value2', 200);
       cache.set('key3', 'value3', 500);
 
-      vi.advanceTimersByTime(150);
+      now += 150;
+      setSystemTime(new Date(now));
 
       const removedCount = cache.cleanup();
 
@@ -288,11 +310,14 @@ describe('TTLCache', () => {
       expect(removedCount).toBe(0);
     });
 
-    it('should run automatically at cleanup interval', () => {
+    it('should run automatically at cleanup interval', async () => {
+      // Reset system time so Date.now() works normally during the setInterval
+      setSystemTime();
+
       cache.set('key1', 'value1', 100);
 
-      // Wait for automatic cleanup
-      vi.advanceTimersByTime(600);
+      // Wait for automatic cleanup (real timer)
+      await Bun.sleep(600);
 
       expect(cache.size()).toBe(0);
     });

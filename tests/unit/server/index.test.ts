@@ -1,64 +1,62 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 
 const originalEnv = { ...process.env };
 
-vi.mock('@modelcontextprotocol/sdk/server/index.js', () => ({
-  Server: vi.fn().mockImplementation(() => ({
-    setRequestHandler: vi.fn(),
-    connect: vi.fn().mockResolvedValue(undefined),
+mock.module('@modelcontextprotocol/sdk/server/index.js', () => ({
+  Server: mock(() => ({
+    setRequestHandler: mock(() => {}),
+    connect: mock(() => Promise.resolve(undefined)),
   })),
 }));
 
-vi.mock('@modelcontextprotocol/sdk/server/stdio.js', () => ({
-  StdioServerTransport: vi.fn().mockImplementation(() => ({})),
+mock.module('@modelcontextprotocol/sdk/server/stdio.js', () => ({
+  StdioServerTransport: mock(() => ({})),
 }));
 
-vi.mock('dotenv', () => ({
-  default: { config: vi.fn() },
+mock.module('dotenv', () => ({
+  default: { config: mock(() => {}) },
 }));
 
-vi.mock('../../../src/utils/logger.js', () => ({
+mock.module('../../../src/utils/logger.js', () => ({
   logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
+    info: mock(() => {}),
+    error: mock(() => {}),
+    warn: mock(() => {}),
+    debug: mock(() => {}),
   },
-  withCorrelationId: vi.fn((id, callback) => callback()),
-  generateCorrelationId: vi.fn().mockReturnValue('test-correlation-id'),
+  withCorrelationId: mock((id, callback) => callback()),
+  generateCorrelationId: mock(() => 'test-correlation-id'),
 }));
 
-vi.mock('../../../src/utils/mcp-error-handler.js', () => ({
+mock.module('../../../src/utils/mcp-error-handler.js', () => ({
   MCPErrorHandler: {
-    createSafeResponse: vi.fn().mockReturnValue({
+    createSafeResponse: mock(() => ({
       content: [{ type: 'text', text: 'Error occurred' }],
       isError: true,
-    }),
+    })),
   },
-  withMCPErrorHandling: vi.fn((name, handler) => handler),
+  withMCPErrorHandling: mock((name, handler) => handler),
 }));
 
-vi.mock('../../../src/utils/stdio-handler.js', () => ({
+mock.module('../../../src/utils/stdio-handler.js', () => ({
   stdioHandler: {
-    flush: vi.fn().mockResolvedValue(undefined),
-    cleanup: vi.fn().mockResolvedValue(undefined),
-    getMetrics: vi.fn().mockReturnValue({}),
+    flush: mock(() => Promise.resolve(undefined)),
+    cleanup: mock(() => Promise.resolve(undefined)),
+    getMetrics: mock(() => ({})),
   },
 }));
 
-vi.mock('../../../src/config/index.js', () => ({
+mock.module('../../../src/config/index.js', () => ({
   ConfigurationManager: {
-    getInstance: vi.fn().mockReturnValue({
-      getLogLevel: vi.fn().mockReturnValue('info'),
-      getApiKey: vi.fn().mockReturnValue('sk-or-v1-test-api-key-12345'),
-      getMaskedApiKey: vi.fn().mockReturnValue('sk-or-***'),
-      getDefaultModel: vi.fn().mockReturnValue('perplexity/sonar'),
-      getTimeoutMs: vi.fn().mockReturnValue(30000),
-      getSafeConfig: vi
-        .fn()
-        .mockReturnValue({ apiKey: '***', model: 'perplexity/sonar' }),
-    }),
-    reset: vi.fn(),
+    getInstance: mock(() => ({
+      getLogLevel: mock(() => 'info'),
+      getApiKey: mock(() => 'sk-or-v1-test-api-key-12345'),
+      getMaskedApiKey: mock(() => 'sk-or-***'),
+      getDefaultModel: mock(() => 'perplexity/sonar'),
+      getTimeoutMs: mock(() => 30000),
+      getSafeConfig: mock(() => ({ apiKey: '***', model: 'perplexity/sonar' })),
+    })),
+    reset: mock(() => {}),
   },
   ConfigurationError: class ConfigurationError extends Error {
     errors: string[];
@@ -76,60 +74,58 @@ vi.mock('../../../src/config/index.js', () => ({
   },
 }));
 
-vi.mock('../../../src/tools/search.js', () => ({
-  createSearchTool: vi.fn().mockReturnValue({
-    search: vi.fn().mockResolvedValue({
-      success: true,
-      requestId: 'test-req-id',
-      result: {
-        content: 'Test search result',
-        sources: [{ url: 'https://example.com', title: 'Example' }],
-        metadata: {
-          model: 'perplexity/sonar',
-          responseTime: 100,
-          usage: { total_tokens: 50 },
+mock.module('../../../src/tools/search.js', () => ({
+  createSearchTool: mock(() => ({
+    search: mock(() =>
+      Promise.resolve({
+        success: true,
+        requestId: 'test-req-id',
+        result: {
+          content: 'Test search result',
+          sources: [{ url: 'https://example.com', title: 'Example' }],
+          metadata: {
+            model: 'perplexity/sonar',
+            responseTime: 100,
+            usage: { total_tokens: 50 },
+          },
         },
-      },
-    }),
-  }),
+      })
+    ),
+  })),
 }));
 
-vi.mock('../../../src/types/search.js', () => ({
-  validateSearchResponse: vi.fn().mockReturnValue(true),
+mock.module('../../../src/types/search.js', () => ({
+  validateSearchResponse: mock(() => true),
 }));
 
-vi.mock('../../../src/utils/json-validator.js', () => ({
+mock.module('../../../src/utils/json-validator.js', () => ({
   JSONValidator: {
-    safeStringify: vi.fn().mockReturnValue({ success: true, data: '{}' }),
-    wrapMCPResponse: vi.fn(data => ({
+    safeStringify: mock(() => ({ success: true, data: '{}' })),
+    wrapMCPResponse: mock(data => ({
       jsonrpc: '2.0',
       id: 'test-id',
       result: data,
     })),
   },
-  safeStringify: vi.fn().mockReturnValue('{}'),
+  safeStringify: mock(() => '{}'),
 }));
 
-vi.mock('../../../src/schemas/search.js', () => ({
-  validateSearchInput: vi.fn(),
+mock.module('../../../src/schemas/search.js', () => ({
+  validateSearchInput: mock(() => {}),
 }));
 
-vi.mock('../../../src/utils/zod-error-parser.js', () => ({
-  createUserFriendlyMessage: vi
-    .fn()
-    .mockReturnValue({ message: 'Validation error' }),
+mock.module('../../../src/utils/zod-error-parser.js', () => ({
+  createUserFriendlyMessage: mock(() => ({ message: 'Validation error' })),
 }));
 
 describe('MCP Server Index', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     process.env.OPENROUTER_API_KEY = 'sk-or-v1-test-api-key-12345-valid';
     process.env.NODE_ENV = 'test';
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
-    vi.resetModules();
   });
 
   describe('createServer', () => {

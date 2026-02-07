@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { ZodError } from 'zod';
 
 import {
@@ -245,7 +245,7 @@ describe('Search Schema Validation', () => {
 
       try {
         SearchToolInputSchema.parse(input);
-        expect.fail('Should have thrown validation error');
+        throw new Error('Should have thrown validation error');
       } catch (error) {
         expect(error).toBeInstanceOf(ZodError);
         const zodError = error as ZodError;
@@ -288,7 +288,7 @@ describe('Search Schema Validation', () => {
 
       try {
         validateSearchInput(input);
-        expect.fail('Should have thrown validation error');
+        throw new Error('Should have thrown validation error');
       } catch (error) {
         expect(error).toBeInstanceOf(ZodError);
         const zodError = error as ZodError;
