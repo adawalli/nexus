@@ -77,7 +77,7 @@ export default [
     files: ['**/*.test.ts', '**/*.test.tsx'],
     languageOptions: {
       globals: {
-        vi: 'readonly',
+        Bun: 'readonly',
         describe: 'readonly',
         it: 'readonly',
         test: 'readonly',

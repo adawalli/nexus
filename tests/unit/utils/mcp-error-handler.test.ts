@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, mock } from 'bun:test';
 
 import {
   MCPApplicationError,
@@ -233,7 +233,7 @@ describe('MCPErrorHandler', () => {
 
   describe('wrapOperation', () => {
     it('should return result on success', async () => {
-      const operation = vi.fn().mockResolvedValue('success');
+      const operation = mock(() => {}).mockResolvedValue('success');
 
       const result = await MCPErrorHandler.wrapOperation(operation);
 
@@ -241,7 +241,7 @@ describe('MCPErrorHandler', () => {
     });
 
     it('should throw MCPApplicationError on failure', async () => {
-      const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+      const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
       await expect(
         MCPErrorHandler.wrapOperation(operation, { method: 'test' })
@@ -281,7 +281,7 @@ describe('MCPErrorHandler', () => {
 
 describe('withMCPErrorHandling', () => {
   it('should wrap handler and return result', async () => {
-    const handler = vi.fn().mockResolvedValue('result');
+    const handler = mock(() => {}).mockResolvedValue('result');
     const wrapped = withMCPErrorHandling('test', handler);
 
     const result = await wrapped('arg1', 'arg2');
@@ -291,7 +291,9 @@ describe('withMCPErrorHandling', () => {
   });
 
   it('should throw MCPApplicationError on handler failure', async () => {
-    const handler = vi.fn().mockRejectedValue(new Error('Handler failed'));
+    const handler = mock(() => {}).mockRejectedValue(
+      new Error('Handler failed')
+    );
     const wrapped = withMCPErrorHandling('test', handler);
 
     await expect(wrapped()).rejects.toBeInstanceOf(MCPApplicationError);
@@ -302,7 +304,7 @@ describe('withMCPErrorHandling', () => {
       'Original error',
       MCP_ERROR_CODES.VALIDATION_ERROR
     );
-    const handler = vi.fn().mockRejectedValue(originalError);
+    const handler = mock(() => {}).mockRejectedValue(originalError);
     const wrapped = withMCPErrorHandling('test', handler);
 
     // The wrapped function should throw MCPApplicationError
@@ -313,7 +315,7 @@ describe('withMCPErrorHandling', () => {
 describe('createMCPContextMiddleware', () => {
   it('should create middleware that wraps handler', async () => {
     const middleware = createMCPContextMiddleware();
-    const handler = vi.fn().mockResolvedValue('result');
+    const handler = mock(() => {}).mockResolvedValue('result');
 
     const wrapped = middleware(handler);
     const result = await wrapped({ params: { name: 'test' } });
@@ -324,7 +326,7 @@ describe('createMCPContextMiddleware', () => {
 
   it('should provide correlation ID to handler', async () => {
     const middleware = createMCPContextMiddleware();
-    const handler = vi.fn().mockResolvedValue('result');
+    const handler = mock(() => {}).mockResolvedValue('result');
 
     const wrapped = middleware(handler);
     await wrapped({ params: { name: 'test' } });
@@ -337,7 +339,7 @@ describe('createMCPContextMiddleware', () => {
 
   it('should handle missing params.name', async () => {
     const middleware = createMCPContextMiddleware();
-    const handler = vi.fn().mockResolvedValue('result');
+    const handler = mock(() => {}).mockResolvedValue('result');
 
     const wrapped = middleware(handler);
     await wrapped({});

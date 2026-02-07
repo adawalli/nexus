@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
 
 import {
   JsonRpcValidator,
@@ -11,17 +11,15 @@ import {
 } from '../../../src/utils/json-rpc-validator.js';
 
 // Mock logger
-vi.mock('../../../src/utils/logger.js', () => ({
+mock.module('../../../src/utils/logger.js', () => ({
   logger: {
-    responseValidation: vi.fn(),
-    jsonRpc: vi.fn(),
+    responseValidation: mock(() => {}),
+    jsonRpc: mock(() => {}),
   },
 }));
 
 describe('JsonRpcValidator', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  beforeEach(() => {});
 
   describe('validateMessage', () => {
     it('should validate a valid JSON-RPC request', () => {
@@ -347,9 +345,10 @@ describe('validatePreTransmission', () => {
   it('should detect round-trip failures', () => {
     // Mock JSON.parse to fail
     const originalParse = JSON.parse;
-    JSON.parse = vi.fn().mockImplementationOnce(() => {
+    const parseMock = mock(() => {
       throw new Error('Parse error');
     });
+    JSON.parse = parseMock as any;
 
     const response = {
       jsonrpc: '2.0',

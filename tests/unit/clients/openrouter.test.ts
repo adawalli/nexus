@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 
 import {
   OpenRouterClient,
@@ -14,19 +14,17 @@ import type {
 } from '../../../src/types/openrouter';
 
 // Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+let mockFetch: ReturnType<typeof mock>;
+const originalFetch = globalThis.fetch;
 
 describe('OpenRouterClient', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Temporarily disable fake timers to avoid deadlocks
-    // vi.useFakeTimers();
+    mockFetch = mock(() => {}) as any;
+    globalThis.fetch = mockFetch as typeof fetch;
   });
 
   afterEach(() => {
-    // vi.useRealTimers();
-    // vi.clearAllTimers();
+    globalThis.fetch = originalFetch;
   });
 
   describe('constructor', () => {
@@ -343,24 +341,26 @@ describe('OpenRouterClient', () => {
 
   describe('chatCompletionsStream', () => {
     it('should handle streaming responses', async () => {
+      const mockRead = mock(() => {});
+      mockRead
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode(
+            'data: {"id":"test","object":"chat.completion.chunk","choices":[{"delta":{"content":"Hello"}}]}\n\n'
+          ),
+        })
+        .mockResolvedValueOnce({
+          done: false,
+          value: new TextEncoder().encode('data: [DONE]\n\n'),
+        })
+        .mockResolvedValueOnce({
+          done: true,
+        });
+
       const mockReadableStream = {
         getReader: () => ({
-          read: vi
-            .fn()
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode(
-                'data: {"id":"test","object":"chat.completion.chunk","choices":[{"delta":{"content":"Hello"}}]}\n\n'
-              ),
-            })
-            .mockResolvedValueOnce({
-              done: false,
-              value: new TextEncoder().encode('data: [DONE]\n\n'),
-            })
-            .mockResolvedValueOnce({
-              done: true,
-            }),
-          releaseLock: vi.fn(),
+          read: mockRead,
+          releaseLock: mock(() => {}),
         }),
       };
 

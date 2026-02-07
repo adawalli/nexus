@@ -1,136 +1,34 @@
-import { describe, it, expect, beforeEach, vi, type MockedClass } from 'vitest';
+/* eslint-disable import/order -- mock.module must precede mocked module imports */
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import {
+  openRouterMockFactory,
+  winstonMockFactory,
+  createMockApiResponse,
+  TEST_API_KEY,
+} from '../../fixtures/index.js';
+
+mock.module('../../../src/clients/openrouter', openRouterMockFactory);
+mock.module('winston', winstonMockFactory);
 
 import { SearchTool } from '../../../src/tools/search';
-import type { ChatCompletionResponse } from '../../../src/types/openrouter';
 import {
   MODELS,
   MODEL_TIMEOUTS,
   MODEL_COST_TIERS,
 } from '../../../src/constants/models';
-
-// Mock the OpenRouter client
-vi.mock('../../../src/clients/openrouter', () => {
-  const mockClient = {
-    chatCompletions: vi.fn(),
-    testConnection: vi.fn(),
-    getHeaders: vi.fn(),
-  };
-
-  return {
-    OpenRouterClient: vi.fn(() => mockClient),
-    OpenRouterApiError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number,
-        public type: string,
-        public code: number
-      ) {
-        super(message);
-      }
-    },
-    AuthenticationError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number = 401,
-        public code: number = 401
-      ) {
-        super(message);
-      }
-    },
-    RateLimitError: class extends Error {
-      constructor(
-        message: string,
-        public retryAfter?: number,
-        public statusCode: number = 429,
-        public code: number = 429
-      ) {
-        super(message);
-        this.retryAfter = retryAfter;
-      }
-    },
-    ServerError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number,
-        public code: number
-      ) {
-        super(message);
-      }
-    },
-  };
-});
-
-vi.mock('winston', () => ({
-  default: {
-    createLogger: () => ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    }),
-    format: {
-      combine: vi.fn(() => ({})),
-      timestamp: vi.fn(),
-      errors: vi.fn(),
-      json: vi.fn(),
-      colorize: vi.fn(),
-      simple: vi.fn(),
-    },
-    transports: {
-      Console: vi.fn(),
-    },
-  },
-}));
+import {
+  setupSearchToolTest,
+  type MockOpenRouterClient,
+} from '../../utils/test-helpers.js';
 
 describe('SearchTool Deep Research Modes', () => {
-  const mockApiKey = 'sk-or-test-api-key-12345678901234';
   let searchTool: SearchTool;
-  let mockClient: {
-    chatCompletions: ReturnType<typeof vi.fn>;
-    testConnection: ReturnType<typeof vi.fn>;
-    getHeaders: ReturnType<typeof vi.fn>;
-  };
-
-  const createMockApiResponse = (model: string): ChatCompletionResponse => ({
-    id: 'test-123',
-    object: 'chat.completion',
-    created: 1640995200,
-    model,
-    choices: [
-      {
-        index: 0,
-        message: {
-          role: 'assistant',
-          content: 'This is a test response with source https://example.com',
-        },
-        finish_reason: 'stop',
-      },
-    ],
-    usage: {
-      prompt_tokens: 10,
-      completion_tokens: 20,
-      total_tokens: 30,
-    },
-  });
+  let mockClient: MockOpenRouterClient;
 
   beforeEach(async () => {
-    vi.clearAllMocks();
-
-    process.env.OPENROUTER_API_KEY = mockApiKey;
-
-    const { ConfigurationManager } =
-      await import('../../../src/config/manager');
-    ConfigurationManager['instance'] = null;
-
-    searchTool = new SearchTool(mockApiKey);
-
-    const openRouterModule = await import('../../../src/clients/openrouter');
-    const MockClient =
-      openRouterModule.OpenRouterClient as unknown as MockedClass<
-        typeof openRouterModule.OpenRouterClient
-      >;
-    mockClient =
-      MockClient.mock.results[MockClient.mock.results.length - 1].value;
+    const setup = await setupSearchToolTest(TEST_API_KEY);
+    searchTool = setup.searchTool;
+    mockClient = setup.mockClient;
   });
 
   describe('Model name to OpenRouter identifier mapping', () => {

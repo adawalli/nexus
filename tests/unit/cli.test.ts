@@ -1,20 +1,20 @@
-import { readFileSync } from 'node:fs';
-import { parseArgs } from 'node:util';
-
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 
 // Mock modules before importing the module under test
-vi.mock('node:fs', () => ({
-  readFileSync: vi.fn(),
+const readFileSyncMock = mock(() => {});
+const parseArgsMock = mock(() => {});
+const createServerMock = mock(() => Promise.resolve({}));
+
+mock.module('node:fs', () => ({
+  readFileSync: readFileSyncMock,
 }));
 
-vi.mock('node:util', () => ({
-  parseArgs: vi.fn(),
+mock.module('node:util', () => ({
+  parseArgs: parseArgsMock,
 }));
 
-// Mock the index.ts module to prevent side effects
-vi.mock('../../src/index.js', () => ({
-  createServer: vi.fn().mockResolvedValue({}),
+mock.module('../../src/index.js', () => ({
+  createServer: createServerMock,
 }));
 
 describe('CLI Module', () => {
@@ -24,21 +24,24 @@ describe('CLI Module', () => {
   const originalProcessArgv = process.argv;
   const originalEnv = { ...process.env };
 
-  let consoleLogMock: ReturnType<typeof vi.fn>;
-  let consoleErrorMock: ReturnType<typeof vi.fn>;
-  let processExitMock: ReturnType<typeof vi.fn>;
+  let consoleLogMock: ReturnType<typeof mock>;
+  let consoleErrorMock: ReturnType<typeof mock>;
+  let processExitMock: ReturnType<typeof mock>;
+  let importCounter = 0;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-
-    consoleLogMock = vi.fn();
-    consoleErrorMock = vi.fn();
-    processExitMock = vi.fn();
+    consoleLogMock = mock(() => {});
+    consoleErrorMock = mock(() => {});
+    processExitMock = mock(() => {});
 
     console.log = consoleLogMock;
     console.error = consoleErrorMock;
     process.exit = processExitMock as unknown as typeof process.exit;
     process.argv = ['node', 'cli.js'];
+
+    readFileSyncMock.mockClear();
+    parseArgsMock.mockClear();
+    createServerMock.mockClear();
 
     delete process.env.OPENROUTER_API_KEY;
     delete process.env.NODE_ENV;
@@ -50,18 +53,23 @@ describe('CLI Module', () => {
     process.exit = originalProcessExit;
     process.argv = originalProcessArgv;
     process.env = { ...originalEnv };
-
-    vi.resetModules();
   });
+
+  // Use cache-busting query string to force re-execution of the CLI module
+  // since Bun caches dynamic imports and has no vi.resetModules() equivalent
+  function importCli() {
+    importCounter++;
+    return import(`../../src/cli.js?cachebust=${importCounter}`);
+  }
 
   describe('printUsage', () => {
     it('should display help message when --help flag is passed', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: true, version: false, stdio: true },
         positionals: [],
       });
 
-      await import('../../src/cli.js');
+      await importCli();
 
       expect(consoleLogMock).toHaveBeenCalled();
       const helpOutput = consoleLogMock.mock.calls
@@ -77,30 +85,28 @@ describe('CLI Module', () => {
 
   describe('printVersion', () => {
     it('should display version from package.json when --version flag is passed', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: true, stdio: true },
         positionals: [],
       });
 
-      vi.mocked(readFileSync).mockReturnValue(
-        JSON.stringify({ version: '3.0.1' })
-      );
+      readFileSyncMock.mockReturnValue(JSON.stringify({ version: '3.0.1' }));
 
-      await import('../../src/cli.js');
+      await importCli();
 
       expect(consoleLogMock).toHaveBeenCalledWith('nexus-mcp v3.0.1');
       expect(processExitMock).toHaveBeenCalledWith(0);
     });
 
     it('should display version unavailable when package.json has no version', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: true, stdio: true },
         positionals: [],
       });
 
-      vi.mocked(readFileSync).mockReturnValue(JSON.stringify({}));
+      readFileSyncMock.mockReturnValue(JSON.stringify({}));
 
-      await import('../../src/cli.js');
+      await importCli();
 
       expect(consoleLogMock).toHaveBeenCalledWith(
         'nexus-mcp (version unavailable)'
@@ -109,16 +115,16 @@ describe('CLI Module', () => {
     });
 
     it('should display version unavailable when package.json cannot be read', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: true, stdio: true },
         positionals: [],
       });
 
-      vi.mocked(readFileSync).mockImplementation(() => {
+      readFileSyncMock.mockImplementation(() => {
         throw new Error('File not found');
       });
 
-      await import('../../src/cli.js');
+      await importCli();
 
       expect(consoleLogMock).toHaveBeenCalledWith(
         'nexus-mcp (version unavailable)'
@@ -129,14 +135,14 @@ describe('CLI Module', () => {
 
   describe('main', () => {
     it('should error when OPENROUTER_API_KEY is not set', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: false, stdio: true },
         positionals: [],
       });
 
       delete process.env.OPENROUTER_API_KEY;
 
-      await import('../../src/cli.js');
+      await importCli();
 
       expect(consoleErrorMock).toHaveBeenCalledWith(
         'Error: OPENROUTER_API_KEY environment variable is required'
@@ -145,23 +151,21 @@ describe('CLI Module', () => {
     });
 
     it('should start server when OPENROUTER_API_KEY is set', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: false, stdio: true },
         positionals: [],
       });
 
       process.env.OPENROUTER_API_KEY = 'sk-or-v1-test-key-that-is-valid';
 
-      const { createServer } = await import('../../src/index.js');
-
-      await import('../../src/cli.js');
+      await importCli();
       await new Promise(resolve => setTimeout(resolve, 10));
 
-      expect(createServer).toHaveBeenCalled();
+      expect(createServerMock).toHaveBeenCalled();
     });
 
     it('should set NODE_ENV to production when not specified', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: false, stdio: true },
         positionals: [],
       });
@@ -169,24 +173,23 @@ describe('CLI Module', () => {
       process.env.OPENROUTER_API_KEY = 'sk-or-v1-test-key-that-is-valid';
       delete process.env.NODE_ENV;
 
-      await import('../../src/cli.js');
+      await importCli();
       await new Promise(resolve => setTimeout(resolve, 10));
 
       expect(process.env.NODE_ENV).toBe('production');
     });
 
     it('should handle server startup errors', async () => {
-      vi.mocked(parseArgs).mockReturnValue({
+      parseArgsMock.mockReturnValue({
         values: { help: false, version: false, stdio: true },
         positionals: [],
       });
 
       process.env.OPENROUTER_API_KEY = 'sk-or-v1-test-key-that-is-valid';
 
-      const { createServer } = await import('../../src/index.js');
-      vi.mocked(createServer).mockRejectedValue(new Error('Startup failed'));
+      createServerMock.mockRejectedValue(new Error('Startup failed'));
 
-      await import('../../src/cli.js');
+      await importCli();
       await new Promise(resolve => setTimeout(resolve, 50));
 
       expect(consoleErrorMock).toHaveBeenCalledWith(

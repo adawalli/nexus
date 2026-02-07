@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, mock } from 'bun:test';
 
 import {
   withRetry,
@@ -12,7 +12,7 @@ import { NetworkError, APIError } from '../../../src/errors/index';
 
 describe('withRetry', () => {
   it('should return result on first successful attempt', async () => {
-    const operation = vi.fn().mockResolvedValue('success');
+    const operation = mock(() => {}).mockResolvedValue('success');
 
     const result = await withRetry(operation);
 
@@ -21,8 +21,7 @@ describe('withRetry', () => {
   });
 
   it('should retry on retryable error', async () => {
-    const operation = vi
-      .fn()
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new NetworkError('Connection failed'))
       .mockResolvedValue('success');
 
@@ -36,9 +35,9 @@ describe('withRetry', () => {
   });
 
   it('should throw after max retries exceeded', async () => {
-    const operation = vi
-      .fn()
-      .mockRejectedValue(new NetworkError('Connection failed'));
+    const operation = mock(() =>
+      Promise.reject(new NetworkError('Connection failed'))
+    );
 
     await expect(
       withRetry(operation, {
@@ -52,9 +51,9 @@ describe('withRetry', () => {
   });
 
   it('should not retry on non-retryable error', async () => {
-    const operation = vi
-      .fn()
-      .mockRejectedValue(new APIError('Bad request', { statusCode: 400 }));
+    const operation = mock(() =>
+      Promise.reject(new APIError('Bad request', { statusCode: 400 }))
+    );
 
     await expect(
       withRetry(operation, { maxAttempts: 3, initialDelay: 1 })
@@ -64,8 +63,7 @@ describe('withRetry', () => {
   });
 
   it('should retry on 429 rate limit error', async () => {
-    const operation = vi
-      .fn()
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new APIError('Rate limited', { statusCode: 429 }))
       .mockResolvedValue('success');
 
@@ -76,8 +74,7 @@ describe('withRetry', () => {
   });
 
   it('should retry on 5xx server error', async () => {
-    const operation = vi
-      .fn()
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new APIError('Server error', { statusCode: 500 }))
       .mockResolvedValue('success');
 
@@ -89,7 +86,7 @@ describe('withRetry', () => {
 
   it('should retry when error message contains timeout', async () => {
     let callCount = 0;
-    const operation = vi.fn().mockImplementation(() => {
+    const operation = mock(() => {}).mockImplementation(() => {
       callCount++;
       if (callCount === 1) {
         return Promise.reject(new Error('Request timeout occurred'));
@@ -104,9 +101,8 @@ describe('withRetry', () => {
   });
 
   it('should call onRetry callback', async () => {
-    const onRetry = vi.fn();
-    const operation = vi
-      .fn()
+    const onRetry = mock(() => {});
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new NetworkError('Failed'))
       .mockResolvedValue('success');
 
@@ -117,8 +113,7 @@ describe('withRetry', () => {
   });
 
   it('should use custom isRetryable function', async () => {
-    const operation = vi
-      .fn()
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new Error('Custom error'))
       .mockResolvedValue('success');
 
@@ -134,8 +129,7 @@ describe('withRetry', () => {
   });
 
   it('should respect maxDelay', async () => {
-    const operation = vi
-      .fn()
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new NetworkError('Failed'))
       .mockRejectedValueOnce(new NetworkError('Failed'))
       .mockResolvedValue('success');
@@ -152,8 +146,7 @@ describe('withRetry', () => {
   });
 
   it('should retry APIError without statusCode', async () => {
-    const operation = vi
-      .fn()
+    const operation = mock(() => {})
       .mockRejectedValueOnce(new APIError('Unknown error'))
       .mockResolvedValue('success');
 
@@ -171,7 +164,7 @@ describe('CircuitBreaker', () => {
       resetTimeout: 100,
       successThreshold: 2,
     });
-    const operation = vi.fn().mockResolvedValue('result');
+    const operation = mock(() => {}).mockResolvedValue('result');
 
     const result = await circuitBreaker.execute(operation);
 
@@ -184,7 +177,7 @@ describe('CircuitBreaker', () => {
       failureThreshold: 3,
       resetTimeout: 100,
     });
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     for (let i = 0; i < 3; i++) {
       await expect(circuitBreaker.execute(operation)).rejects.toThrow('Failed');
@@ -198,7 +191,7 @@ describe('CircuitBreaker', () => {
       failureThreshold: 2,
       resetTimeout: 10000,
     });
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     // Open the circuit
     await expect(circuitBreaker.execute(operation)).rejects.toThrow();
@@ -218,7 +211,7 @@ describe('CircuitBreaker', () => {
       resetTimeout: 10,
       successThreshold: 1,
     });
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     // Open the circuit
     await expect(circuitBreaker.execute(operation)).rejects.toThrow();
@@ -242,7 +235,7 @@ describe('CircuitBreaker', () => {
       resetTimeout: 10,
       successThreshold: 2,
     });
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     // Open the circuit
     await expect(circuitBreaker.execute(operation)).rejects.toThrow();
@@ -266,10 +259,14 @@ describe('CircuitBreaker', () => {
 
   it('should return metrics', async () => {
     const circuitBreaker = new CircuitBreaker({ failureThreshold: 5 });
-    const operation = vi
-      .fn()
-      .mockResolvedValueOnce('success')
-      .mockRejectedValueOnce(new Error('Failed'));
+    const operation = mock(() => {
+      let calls = 0;
+      return () => {
+        calls++;
+        if (calls === 1) return Promise.resolve('success');
+        return Promise.reject(new Error('Failed'));
+      };
+    })();
 
     await circuitBreaker.execute(operation);
     await expect(circuitBreaker.execute(operation)).rejects.toThrow();
@@ -282,7 +279,7 @@ describe('CircuitBreaker', () => {
 
   it('should reset circuit to closed state', async () => {
     const circuitBreaker = new CircuitBreaker({ failureThreshold: 2 });
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     // Open the circuit
     await expect(circuitBreaker.execute(operation)).rejects.toThrow();
@@ -298,13 +295,13 @@ describe('CircuitBreaker', () => {
   });
 
   it('should call onStateChange when state changes', async () => {
-    const onStateChange = vi.fn();
+    const onStateChange = mock(() => {});
     const cb = new CircuitBreaker({
       failureThreshold: 2,
       onStateChange,
     });
 
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     await expect(cb.execute(operation)).rejects.toThrow();
     await expect(cb.execute(operation)).rejects.toThrow();
@@ -318,7 +315,7 @@ describe('CircuitBreaker', () => {
 
 describe('withTimeout', () => {
   it('should return result before timeout', async () => {
-    const operation = vi.fn().mockResolvedValue('result');
+    const operation = mock(() => {}).mockResolvedValue('result');
 
     const result = await withTimeout(operation, { timeout: 1000 });
 
@@ -326,7 +323,9 @@ describe('withTimeout', () => {
   });
 
   it('should propagate operation errors', async () => {
-    const operation = vi.fn().mockRejectedValue(new Error('Operation error'));
+    const operation = mock(() => {}).mockRejectedValue(
+      new Error('Operation error')
+    );
 
     await expect(withTimeout(operation, { timeout: 1000 })).rejects.toThrow(
       'Operation error'
@@ -334,7 +333,7 @@ describe('withTimeout', () => {
   });
 
   it('should return result when operation completes quickly', async () => {
-    const operation = vi.fn().mockResolvedValue('quick result');
+    const operation = mock(() => {}).mockResolvedValue('quick result');
 
     const result = await withTimeout(operation, { timeout: 100 });
 
@@ -344,7 +343,7 @@ describe('withTimeout', () => {
 
 describe('withFallback', () => {
   it('should return result on success', async () => {
-    const operation = vi.fn().mockResolvedValue('success');
+    const operation = mock(() => {}).mockResolvedValue('success');
 
     const result = await withFallback(operation, { fallback: 'fallback' });
 
@@ -352,7 +351,7 @@ describe('withFallback', () => {
   });
 
   it('should return fallback value on error', async () => {
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     const result = await withFallback(operation, { fallback: 'fallback' });
 
@@ -360,8 +359,8 @@ describe('withFallback', () => {
   });
 
   it('should call fallback function when fallback is a function', async () => {
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
-    const fallbackFn = vi.fn().mockReturnValue('fallback result');
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
+    const fallbackFn = mock(() => {}).mockReturnValue('fallback result');
 
     const result = await withFallback(operation, { fallback: fallbackFn });
 
@@ -370,8 +369,8 @@ describe('withFallback', () => {
   });
 
   it('should call async fallback function', async () => {
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
-    const fallbackFn = vi.fn().mockResolvedValue('async fallback');
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
+    const fallbackFn = mock(() => {}).mockResolvedValue('async fallback');
 
     const result = await withFallback(operation, { fallback: fallbackFn });
 
@@ -379,8 +378,8 @@ describe('withFallback', () => {
   });
 
   it('should call onFallback callback', async () => {
-    const onFallback = vi.fn();
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const onFallback = mock(() => {});
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     await withFallback(operation, { fallback: 'fallback', onFallback });
 
@@ -388,7 +387,9 @@ describe('withFallback', () => {
   });
 
   it('should respect shouldFallback condition', async () => {
-    const operation = vi.fn().mockRejectedValue(new Error('Specific error'));
+    const operation = mock(() => {}).mockRejectedValue(
+      new Error('Specific error')
+    );
 
     const result = await withFallback(operation, {
       fallback: 'fallback',
@@ -400,7 +401,9 @@ describe('withFallback', () => {
   });
 
   it('should throw when shouldFallback returns false', async () => {
-    const operation = vi.fn().mockRejectedValue(new Error('Different error'));
+    const operation = mock(() => {}).mockRejectedValue(
+      new Error('Different error')
+    );
 
     await expect(
       withFallback(operation, {
@@ -418,10 +421,14 @@ describe('createResilientOperation', () => {
       retry: { maxAttempts: 3, initialDelay: 1, jitter: 0 },
     });
 
-    const operation = vi
-      .fn()
-      .mockRejectedValueOnce(new NetworkError('Failed'))
-      .mockResolvedValue('success');
+    let called = false;
+    const operation = mock(() => {
+      if (!called) {
+        called = true;
+        return Promise.reject(new NetworkError('Failed'));
+      }
+      return Promise.resolve('success');
+    });
 
     const result = await resilient(operation);
 
@@ -434,7 +441,7 @@ describe('createResilientOperation', () => {
       fallback: { fallback: 'default' },
     });
 
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     const result = await resilient(operation);
 
@@ -447,7 +454,7 @@ describe('createResilientOperation', () => {
     });
 
     // Test that quick operations work with timeout configured
-    const operation = vi.fn().mockResolvedValue('success');
+    const operation = mock(() => {}).mockResolvedValue('success');
 
     const result = await resilient(operation);
     expect(result).toBe('success');
@@ -457,7 +464,7 @@ describe('createResilientOperation', () => {
     // Test circuit breaker directly since createResilientOperation has a closure issue
     const circuitBreaker = new CircuitBreaker({ failureThreshold: 2 });
 
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     await expect(circuitBreaker.execute(operation)).rejects.toThrow('Failed');
     await expect(circuitBreaker.execute(operation)).rejects.toThrow('Failed');
@@ -472,7 +479,7 @@ describe('createResilientOperation', () => {
       fallback: { fallback: 'default' },
     });
 
-    const operation = vi.fn().mockRejectedValue(new Error('Failed'));
+    const operation = mock(() => {}).mockRejectedValue(new Error('Failed'));
 
     const result = await resilient(operation);
 
@@ -482,7 +489,7 @@ describe('createResilientOperation', () => {
   it('should work without any options', async () => {
     const resilient = createResilientOperation({});
 
-    const operation = vi.fn().mockResolvedValue('success');
+    const operation = mock(() => {}).mockResolvedValue('success');
 
     const result = await resilient(operation);
 

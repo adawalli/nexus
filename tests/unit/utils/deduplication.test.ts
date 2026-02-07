@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, mock } from 'bun:test';
 
 import {
   RequestDeduplicator,
@@ -10,7 +10,6 @@ describe('RequestDeduplicator', () => {
   let deduplicator: RequestDeduplicator<string>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     deduplicator = new RequestDeduplicator<string>({
       defaultTimeout: 1000,
       maxConcurrentRequests: 5,
@@ -24,7 +23,7 @@ describe('RequestDeduplicator', () => {
 
   describe('execute', () => {
     it('should execute a unique request', async () => {
-      const requestFn = vi.fn().mockResolvedValue('result1');
+      const requestFn = mock(() => Promise.resolve('result1'));
 
       const result = await deduplicator.execute('key1', requestFn);
 
@@ -33,11 +32,9 @@ describe('RequestDeduplicator', () => {
     });
 
     it('should deduplicate identical concurrent requests', async () => {
-      const requestFn = vi
-        .fn()
-        .mockImplementation(
-          () => new Promise(resolve => setTimeout(() => resolve('result'), 50))
-        );
+      const requestFn = mock(
+        () => new Promise(resolve => setTimeout(() => resolve('result'), 50))
+      );
 
       // Start multiple identical requests concurrently
       const promises = [
@@ -56,8 +53,8 @@ describe('RequestDeduplicator', () => {
     });
 
     it('should handle different request keys separately', async () => {
-      const requestFn1 = vi.fn().mockResolvedValue('result1');
-      const requestFn2 = vi.fn().mockResolvedValue('result2');
+      const requestFn1 = mock(() => Promise.resolve('result1'));
+      const requestFn2 = mock(() => Promise.resolve('result2'));
 
       const [result1, result2] = await Promise.all([
         deduplicator.execute('key1', requestFn1),
@@ -72,7 +69,7 @@ describe('RequestDeduplicator', () => {
 
     it('should propagate errors to all waiting callers', async () => {
       const error = new Error('Request failed');
-      const requestFn = vi.fn().mockRejectedValue(error);
+      const requestFn = mock(() => Promise.reject(error));
 
       const promises = [
         deduplicator.execute('key1', requestFn),
@@ -84,7 +81,7 @@ describe('RequestDeduplicator', () => {
     });
 
     it('should handle request timeout', async () => {
-      const requestFn = vi.fn().mockImplementation(
+      const requestFn = mock(
         () => new Promise(resolve => setTimeout(resolve, 2000)) // Longer than timeout
       );
 
@@ -98,14 +95,10 @@ describe('RequestDeduplicator', () => {
 
       // Create more requests than the limit
       for (let i = 0; i < 6; i++) {
-        const requestFn = vi
-          .fn()
-          .mockImplementation(
-            () =>
-              new Promise(resolve =>
-                setTimeout(() => resolve(`result${i}`), 100)
-              )
-          );
+        const requestFn = mock(
+          () =>
+            new Promise(resolve => setTimeout(() => resolve(`result${i}`), 100))
+        );
 
         if (i < 5) {
           // First 5 should succeed
@@ -126,11 +119,9 @@ describe('RequestDeduplicator', () => {
 
   describe('isPending', () => {
     it('should return true for pending requests', async () => {
-      const requestFn = vi
-        .fn()
-        .mockImplementation(
-          () => new Promise(resolve => setTimeout(resolve, 100))
-        );
+      const requestFn = mock(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      );
 
       const promise = deduplicator.execute('key1', requestFn);
 
@@ -144,11 +135,9 @@ describe('RequestDeduplicator', () => {
 
   describe('getWaitingCallers', () => {
     it('should track number of waiting callers', async () => {
-      const requestFn = vi
-        .fn()
-        .mockImplementation(
-          () => new Promise(resolve => setTimeout(resolve, 100))
-        );
+      const requestFn = mock(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      );
 
       // Start first request
       const promise1 = deduplicator.execute('key1', requestFn);
@@ -165,11 +154,9 @@ describe('RequestDeduplicator', () => {
 
   describe('cancel', () => {
     it('should cancel a pending request', async () => {
-      const requestFn = vi
-        .fn()
-        .mockImplementation(
-          () => new Promise(resolve => setTimeout(() => resolve('result'), 100))
-        );
+      const requestFn = mock(
+        () => new Promise(resolve => setTimeout(() => resolve('result'), 100))
+      );
 
       const promise = deduplicator.execute('key1', requestFn);
 
@@ -188,11 +175,9 @@ describe('RequestDeduplicator', () => {
 
   describe('cancelAll', () => {
     it('should cancel all pending requests', async () => {
-      const requestFn = vi
-        .fn()
-        .mockImplementation(
-          () => new Promise(resolve => setTimeout(resolve, 100))
-        );
+      const requestFn = mock(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      );
 
       const promises = [
         deduplicator.execute('key1', requestFn),
@@ -213,12 +198,10 @@ describe('RequestDeduplicator', () => {
 
   describe('getStats', () => {
     it('should return accurate statistics', async () => {
-      const requestFn1 = vi.fn().mockResolvedValue('result1');
-      const requestFn2 = vi
-        .fn()
-        .mockImplementation(
-          () => new Promise(resolve => setTimeout(() => resolve('result2'), 50))
-        );
+      const requestFn1 = mock(() => Promise.resolve('result1'));
+      const requestFn2 = mock(
+        () => new Promise(resolve => setTimeout(() => resolve('result2'), 50))
+      );
 
       // Unique request
       await deduplicator.execute('key1', requestFn1);
@@ -250,7 +233,7 @@ describe('RequestDeduplicator', () => {
         promise: Promise.resolve('test'),
         timestamp,
         timeout: 1000, // 1 second timeout
-        cleanup: vi.fn(() => {
+        cleanup: mock(() => {
           // Mock the actual cleanup behavior - remove from map
           deduplicator['pendingRequests'].delete('stuck-key');
         }),
@@ -271,7 +254,7 @@ describe('RequestDeduplicator', () => {
         promise: Promise.resolve('test'),
         timestamp: Date.now(), // Just now
         timeout: 1000,
-        cleanup: vi.fn(),
+        cleanup: mock(() => {}),
         waitingCallers: 1,
       };
 

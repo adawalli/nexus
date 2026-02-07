@@ -1,6 +1,6 @@
 import { PassThrough } from 'stream';
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 
 import {
   StdioHandler,

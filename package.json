@@ -28,11 +28,10 @@
     "dev:types": "tsc --noEmit --watch",
     "dev:clean": "rm -rf dist .tsbuildinfo",
     "test": "bun run test:unit && bun run test:integration",
-    "test:unit": "NODE_ENV=test vitest run --exclude=tests/integration",
-    "test:integration": "NODE_ENV=test vitest run tests/integration",
-    "test:watch": "NODE_ENV=test vitest",
-    "test:ui": "NODE_ENV=test vitest --ui",
-    "test:coverage": "NODE_ENV=test vitest run --coverage",
+    "test:unit": "bash scripts/test-unit.sh",
+    "test:integration": "NODE_ENV=test bun test tests/integration",
+    "test:watch": "NODE_ENV=test bun test --watch",
+    "test:coverage": "NODE_ENV=test bun test --coverage",
     "test:npx:local": "npm pack && npm install -g ./nexus-mcp-*.tgz && nexus --help && npm uninstall -g nexus-mcp",
     "test:npx:published": "npx nexus-mcp@latest --help",
     "release": "bun run release:validate && bun run release:build && bun run release:publish",
@@ -79,28 +78,26 @@
     "url": "https://github.com/adawalli/nexus/issues"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.2",
-    "axios": "^1.13.2",
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "axios": "^1.13.4",
     "data-masking": "^1.0.3",
     "dotenv": "^16.6.1",
     "winston": "^3.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@types/node": "^24.10.7",
-    "@typescript-eslint/eslint-plugin": "^8.52.0",
-    "@typescript-eslint/parser": "^8.52.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
+    "@types/node": "^24.10.11",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-unused-imports": "^4.3.0",
-    "msw": "^2.12.7",
-    "prettier": "^3.7.4",
+    "msw": "^2.12.9",
+    "prettier": "^3.8.1",
+    "@types/bun": "^1.2.5",
     "standard-version": "^9.5.0",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3"
   }
 }

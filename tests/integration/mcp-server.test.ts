@@ -1,24 +1,25 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 
 import { JSONValidator } from '../../src/utils/json-validator.js';
 import { JsonRpcValidator } from '../../src/utils/json-rpc-validator.js';
 import { ConfigurationManager } from '../../src/config/manager.js';
 
 describe('MCP Server JSON-RPC Response Validation', () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
     // Mock environment variables for testing
-    vi.stubEnv(
-      'OPENROUTER_API_KEY',
-      'sk-or-v1-test-key-that-is-long-enough-for-validation-12345'
-    );
-    vi.stubEnv('NODE_ENV', 'test');
+    process.env.OPENROUTER_API_KEY =
+      'sk-or-v1-test-key-that-is-long-enough-for-validation-12345';
+    process.env.NODE_ENV = 'test';
 
     // Reset singleton instance
     ConfigurationManager.reset();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    // Restore original environment
+    process.env = originalEnv;
   });
 
   describe('list_tools response format', () => {
