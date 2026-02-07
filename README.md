@@ -29,7 +29,7 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered sear
 
 ### Key Characteristics
 
-- **Zero-install deployment**: Executable via `npx` with no build requirements
+- **Zero-install deployment**: Executable via `bunx` (or `npx`) with no build requirements
 - **OpenRouter integration**: Multiple AI models including Perplexity Sonar (web search) and Grok 4 (training data)
 - **MCP protocol compliance**: Implements standard MCP tool and resource interfaces
 - **Production architecture**: Includes request caching, deduplication, retry logic, and error handling
@@ -39,9 +39,9 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered sear
 
 ### Deployment
 
-- NPX-based execution with zero local installation
+- Bunx/NPX-based execution with zero local installation
 - Cross-platform compatibility (macOS, Linux, Windows)
-- Node.js 18+ runtime requirement
+- Bun 1.0+ or Node.js 18+ runtime requirement
 - Automated version updates via npm registry
 
 ### Search Capabilities
@@ -70,10 +70,10 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered sear
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- [Bun](https://bun.sh) 1.0+ (recommended) or Node.js 18+
 - OpenRouter API key ([register at openrouter.ai](https://openrouter.ai))
 
-### NPX Installation
+### Quick Install
 
 Execute the server without local installation:
 
@@ -81,23 +81,26 @@ Execute the server without local installation:
 # Set your OpenRouter API key
 export OPENROUTER_API_KEY=your-api-key-here
 
-# Run the server via NPX
+# Run the server via bunx (recommended)
+bunx nexus-mcp
+
+# Or via npx
 npx nexus-mcp
 ```
 
 The server starts and listens for MCP client connections via STDIO transport.
 
-### Testing the NPX Installation
+### Testing the Installation
 
 ```bash
 # Test the CLI help
-npx nexus-mcp --help
+bunx nexus-mcp --help
 
 # Test the version
-npx nexus-mcp --version
+bunx nexus-mcp --version
 
 # Run with your API key
-OPENROUTER_API_KEY=your-key npx nexus-mcp
+OPENROUTER_API_KEY=your-key bunx nexus-mcp
 ```
 
 ## Alternative: Local Development Installation
@@ -141,9 +144,9 @@ bun run start
 
 ## Integration with MCP Clients
 
-### NPX-Based Integration (Recommended)
+### Bunx-Based Integration (Recommended)
 
-Configure MCP clients to execute the server via NPX:
+Configure MCP clients to execute the server via bunx:
 
 ### Claude Code
 
@@ -153,7 +156,7 @@ Configuration in `~/.claude/mcp_settings.json`:
 {
   "mcpServers": {
     "nexus": {
-      "command": "npx",
+      "command": "bunx",
       "args": ["nexus-mcp"],
       "env": {
         "OPENROUTER_API_KEY": "your-api-key-here"
@@ -170,7 +173,7 @@ Restart Claude Code after configuration changes.
 Add server configuration in Cursor's MCP settings:
 
 - **Name**: `nexus`
-- **Command**: `npx`
+- **Command**: `bunx`
 - **Args**: `["nexus-mcp"]`
 - **Environment Variables**: `OPENROUTER_API_KEY=your-api-key-here`
 
@@ -181,20 +184,22 @@ Restart Cursor after configuration changes.
 Standard MCP client connection parameters:
 
 - **Transport**: stdio
-- **Command**: `npx`
+- **Command**: `bunx`
 - **Args**: `["nexus-mcp"]`
 - **Environment**: `OPENROUTER_API_KEY=your-api-key-here`
 
-### Alternative: Local Installation
+### Alternative: npx or Local Installation
 
-If you prefer using a local installation (after following the local development setup):
+If you don't have Bun installed, use `npx` in place of `bunx` in any of the configurations above.
+
+For a local installation (after following the local development setup):
 
 ```json
 {
   "mcpServers": {
     "nexus": {
-      "command": "node",
-      "args": ["/path/to/nexus-mcp/dist/cli.js"],
+      "command": "bun",
+      "args": ["run", "/path/to/nexus-mcp/dist/cli.js"],
       "env": {
         "OPENROUTER_API_KEY": "your-api-key-here"
       }
@@ -315,7 +320,12 @@ The server provides a configuration status resource at `config://status` that sh
 
 ## Troubleshooting
 
-### NPX-Specific Issues
+### Bunx/NPX-Specific Issues
+
+**"bunx: command not found"**
+
+- Install Bun: `curl -fsSL https://bun.sh/install | bash`
+- Or fall back to npx if you have Node.js 18+ installed
 
 **"npx: command not found"**
 
@@ -327,13 +337,13 @@ The server provides a configuration status resource at `config://status` that sh
 - The package may not be published yet. Use local installation instead
 - Verify network connectivity for npm registry access
 
-**NPX takes a long time to start**
+**Slow startup on first run**
 
-- This is normal on first run as NPX downloads the package
+- This is normal on first run as the package is downloaded
 - Subsequent runs will be faster due to caching
 - For faster startup, use local installation instead
 
-**"Permission denied" errors with NPX**
+**"Permission denied" errors with npx**
 
 - Try: `npx --yes nexus-mcp --stdio`
 - Or set npm permissions: `npm config set user 0 && npm config set unsafe-perm true`
@@ -367,7 +377,7 @@ The server provides a configuration status resource at `config://status` that sh
 **MCP client can't connect to server**
 
 - Verify your MCP configuration uses the correct command and arguments
-- Check that Node.js 18+ is available in your MCP client's environment
+- Check that Bun 1.0+ or Node.js 18+ is available in your MCP client's environment
 - Ensure the API key is properly set in the environment variables
 
 ### Debug Logging
