@@ -159,7 +159,7 @@ describe('CLI Module', () => {
       process.env.OPENROUTER_API_KEY = 'sk-or-v1-test-key-that-is-valid';
 
       await importCli();
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await Bun.sleep(10);
 
       expect(createServerMock).toHaveBeenCalled();
     });
@@ -174,7 +174,7 @@ describe('CLI Module', () => {
       delete process.env.NODE_ENV;
 
       await importCli();
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await Bun.sleep(10);
 
       expect(process.env.NODE_ENV).toBe('production');
     });
@@ -190,7 +190,7 @@ describe('CLI Module', () => {
       createServerMock.mockRejectedValue(new Error('Startup failed'));
 
       await importCli();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await Bun.sleep(50);
 
       expect(consoleErrorMock).toHaveBeenCalledWith(
         'Failed to start Nexus MCP server:',

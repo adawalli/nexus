@@ -5,7 +5,7 @@ import { JsonRpcValidator } from '../../src/utils/json-rpc-validator.js';
 import { ConfigurationManager } from '../../src/config/manager.js';
 
 describe('MCP Server JSON-RPC Response Validation', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   beforeEach(() => {
     // Mock environment variables for testing
