@@ -117,45 +117,40 @@ export function openRouterMockFactory(): Record<string, unknown> {
     getHeaders: mock(() => {}),
   };
 
+  class OpenRouterApiError extends Error {
+    constructor(
+      message: string,
+      public statusCode: number,
+      public type: string,
+      public code: number
+    ) {
+      super(message);
+    }
+  }
+
   return {
     OpenRouterClient: mock(() => mockClient),
-    OpenRouterApiError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number,
-        public type: string,
-        public code: number
-      ) {
-        super(message);
+    OpenRouterApiError,
+    AuthenticationError: class extends OpenRouterApiError {
+      constructor(message: string, statusCode = 401, code = 401) {
+        super(message, statusCode, 'authentication_error', code);
       }
     },
-    AuthenticationError: class extends Error {
+    RateLimitError: class extends OpenRouterApiError {
+      retryAfter?: number;
       constructor(
         message: string,
-        public statusCode: number = 401,
-        public code: number = 401
+        retryAfter?: number,
+        statusCode = 429,
+        code = 429
       ) {
-        super(message);
-      }
-    },
-    RateLimitError: class extends Error {
-      constructor(
-        message: string,
-        public retryAfter?: number,
-        public statusCode: number = 429,
-        public code: number = 429
-      ) {
-        super(message);
+        super(message, statusCode, 'rate_limit_error', code);
         this.retryAfter = retryAfter;
       }
     },
-    ServerError: class extends Error {
-      constructor(
-        message: string,
-        public statusCode: number,
-        public code: number
-      ) {
-        super(message);
+    ServerError: class extends OpenRouterApiError {
+      constructor(message: string, statusCode: number, code: number) {
+        super(message, statusCode, 'server_error', code);
       }
     },
   };
