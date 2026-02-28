@@ -15,8 +15,8 @@ Thank you for your interest in contributing to Nexus! We welcome contributions f
 1. **Fork and clone the repository**
 
    ```bash
-   git clone https://github.com/your-username/nexus-mcp.git
-   cd nexus-mcp
+   git clone https://github.com/your-username/nexus.git
+   cd nexus
    ```
 
 2. **Install dependencies**
