@@ -7,17 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.3.2](https://github.com/adawalli/nexus/compare/v3.3.1...v3.3.2) (2026-02-28)
 
-
 ### Bug Fixes
 
-* use bun run test in publish workflow to isolate mock.module files ([b49a90f](https://github.com/adawalli/nexus/commit/b49a90f994b1878611050c103edb95725cf32ce1))
+- use bun run test in publish workflow to isolate mock.module files ([b49a90f](https://github.com/adawalli/nexus/commit/b49a90f994b1878611050c103edb95725cf32ce1))
 
 ## [3.3.1](https://github.com/adawalli/nexus/compare/v3.3.0...v3.3.1) (2026-02-28)
 
-
 ### Bug Fixes
 
-* correct repo name in CONTRIBUTING.md clone instructions ([522f462](https://github.com/adawalli/nexus/commit/522f4621aeb659082793e8bc76592e117419be57))
+- correct repo name in CONTRIBUTING.md clone instructions ([522f462](https://github.com/adawalli/nexus/commit/522f4621aeb659082793e8bc76592e117419be57))
 
 ## 1.0.0 (2026-02-28)
 
