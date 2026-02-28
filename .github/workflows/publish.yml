@@ -26,7 +26,7 @@ jobs:
 
       - run: bun install
 
-      - run: bun test
+      - run: bun run test
 
       - run: bun run build
 
