@@ -35,6 +35,10 @@ Nexus is a **Model Context Protocol (MCP) server** that provides AI-powered sear
 - **Production architecture**: Includes request caching, deduplication, retry logic, and error handling
 - **Type-safe implementation**: Full TypeScript coverage with strict type checking
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/adawalli-nexus).
+
 ## Features
 
 ### Deployment
