@@ -3,6 +3,12 @@ name: Publish to npm
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -10,25 +16,54 @@ permissions:
 
 jobs:
   publish:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - name: Validate release tag
+        id: release
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release tag must use vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ steps.release.outputs.tag }}
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '22.23.4'
 
-      - run: npm install -g npm@latest
+      - run: npm install -g npm@11.20.0
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: '1.4.3'
 
-      - run: bun install
+      - name: Check package version
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          if (`v${version}` !== process.env.RELEASE_TAG) {
+            throw new Error('Package version does not match the release tag');
+          }
+          NODE
+
+      - run: bun install --frozen-lockfile
 
       - run: bun run test
 
       - run: bun run build
 
+      - name: Validate npm publication
+        run: npm publish --dry-run --access public --provenance --ignore-scripts
+
       - name: Publish to npm
-        run: npm publish --access public --provenance --ignore-scripts
+        run: npm publish --access public --provenance --ignore-scripts --loglevel verbose
