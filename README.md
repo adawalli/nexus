@@ -403,6 +403,10 @@ You can test if the server is working by checking the configuration status resou
 
 For developers working on this server:
 
+The published CLI bundles the MCP SDK and its runtime dependencies from `bun.lock`.
+This retains patched transitive dependencies when npm consumers already have an
+older dependency tree. Run `bun install --frozen-lockfile` before packing a release.
+
 ```bash
 # Development with hot reload
 bun run dev

@@ -1,6 +1,6 @@
 {
   "name": "nexus-mcp",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "Nexus MCP server - Intelligent AI model search and discovery with OpenRouter integration",
   "main": "dist/index.js",
   "bin": {
@@ -80,15 +80,20 @@
     "access": "public",
     "provenance": true
   },
+  "bundleDependencies": [
+    "@modelcontextprotocol/sdk"
+  ],
   "overrides": {
     "minimatch": "^9.0.5",
-    "brace-expansion": "^2.0.2",
+    "brace-expansion": "^2.1.6",
     "qs": "^6.14.2",
-    "hono": "^4.11.10"
+    "hono": "^4.13.11",
+    "undici": "^6.29.1",
+    "express-rate-limit": "^8.7.1"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
-    "axios": "^1.13.6",
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "axios": "^1.20.0",
     "data-masking": "^1.0.3",
     "dotenv": "^16.6.1",
     "winston": "^3.19.0"
