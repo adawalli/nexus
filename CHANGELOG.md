@@ -7,10 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.4.0](https://github.com/adawalli/nexus/compare/v3.3.2...v3.4.0) (2026-02-28)
 
-
 ### Features
 
-* update deps, add security overrides, migrate to release-it ([12e10ac](https://github.com/adawalli/nexus/commit/12e10acd6b24534b51bf8af3ecb692d12071368b))
+- update deps, add security overrides, migrate to release-it ([12e10ac](https://github.com/adawalli/nexus/commit/12e10acd6b24534b51bf8af3ecb692d12071368b))
 
 ## [3.3.2](https://github.com/adawalli/nexus/compare/v3.3.1...v3.3.2) (2026-02-28)
 
