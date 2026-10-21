@@ -80,6 +80,9 @@
     "access": "public",
     "provenance": true
   },
+  "bundleDependencies": [
+    "@modelcontextprotocol/sdk"
+  ],
   "overrides": {
     "minimatch": "^9.0.5",
     "brace-expansion": "^2.1.6",
